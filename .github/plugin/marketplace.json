@@ -1,0 +1,19 @@
+{
+  "name": "performance-optimization-copilot",
+  "owner": {
+    "name": "Saar Shen",
+    "email": "noreply@github.com"
+  },
+  "metadata": {
+    "description": "Performance optimization skills and Azure monitoring tools for GitHub Copilot CLI",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "performance-optimization-copilot",
+      "description": "Performance optimization skills and Azure monitoring integrations (Application Insights + Azure Monitor)",
+      "version": "0.1.0",
+      "source": "."
+    }
+  ]
+}

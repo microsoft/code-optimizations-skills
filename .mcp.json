@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "azure-perf-monitoring": {
+      "type": "local",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@azure/mcp@latest",
+        "server",
+        "start",
+        "--namespace",
+        "application-insights",
+        "--namespace",
+        "monitor"
+      ],
+      "tools": ["*"]
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "performance-optimization-copilot",
+  "description": "Performance optimization skills and Azure monitoring integrations for GitHub Copilot CLI",
+  "version": "0.1.0",
+  "author": {
+    "name": "Saar Shen",
+    "url": "https://github.com/xiaomi7732"
+  },
+  "license": "MIT",
+  "repository": "https://github.com/xiaomi7732/performance-optimization-copilot",
+  "keywords": [
+    "performance",
+    "optimization",
+    "profiling",
+    "azure",
+    "application-insights",
+    "azure-monitor"
+  ],
+  "skills": "skills/",
+  "agents": "agents/",
+  "mcpServers": ".mcp.json"
+}
