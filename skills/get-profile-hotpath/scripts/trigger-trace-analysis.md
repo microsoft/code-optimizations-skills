@@ -32,6 +32,12 @@ POST https://dataplane.diagnosticservices.azure.com/api/apps/{appId}/profileTree
 | `showFrameworkDependencies` | `false` to hide framework frames, `true` to show them |
 | `redisCacheRegion` | The `redisCacheRegion` value obtained from the metadata endpoint |
 
+## Redirect behaviour (important)
+
+When the analysis results already exist, the POST returns a **302 redirect** to the equivalent GET URL. Most HTTP clients (including PowerShell's `Invoke-RestMethod`) **strip the `Authorization` header** when following redirects, causing a 401 Unauthorized on the redirected GET.
+
+**Workaround**: Disable automatic redirects with `-MaximumRedirection 0`. If the response is a 302, extract the `Location` header and manually call that URL with the `Authorization` header. If the response is 200, the analysis was just triggered — proceed to [poll-analysis-status.md](poll-analysis-status.md).
+
 ## PowerShell script
 
 ```powershell
@@ -46,17 +52,30 @@ $body = @{
     redisCacheRegion = $redisCacheRegion
 } | ConvertTo-Json
 
-$analysisResponse = Invoke-RestMethod `
+$headers = @{
+    "Authorization" = "Bearer $token"
+    "x-ms-client-request-id" = $correlationId
+}
+
+# Disable auto-redirect to avoid auth header being stripped on 302
+$response = Invoke-WebRequest `
   -Uri "https://dataplane.diagnosticservices.azure.com/api/apps/$appId/profileTreedefinitions?api-version=2024-03-06-preview" `
   -Method POST `
-  -Headers @{
-    "Authorization" = "Bearer $token"
-    "Content-Type"  = "application/json"
-    "x-ms-client-request-id" = $correlationId
-  } `
-  -Body $body
+  -Headers $headers `
+  -ContentType "application/json" `
+  -Body $body `
+  -MaximumRedirection 0 `
+  -SkipHttpErrorCheck
 
-Write-Host "Trace analysis triggered successfully."
+if ($response.StatusCode -eq 302) {
+    # Results already exist — follow the redirect manually with the auth header
+    $redirectUrl = "https://dataplane.diagnosticservices.azure.com$($response.Headers['Location'])"
+    Write-Host "Analysis cached. Following redirect: $redirectUrl"
+    $rootTree = Invoke-RestMethod -Uri $redirectUrl -Method GET -Headers $headers
+    Write-Host "Activity: $($rootTree.ActivityId) | Wall: $($rootTree.WallClockMSec)ms"
+} elseif ($response.StatusCode -eq 202) {
+    Write-Host "Analysis triggered (202 Accepted). Poll for completion, then fetch the profile tree with a GET."
+} else {
+    Write-Error "Unexpected status: $($response.StatusCode) — $($response.Content)"
+}
 ```
-
-This step must complete before fetching the root profile tree with a GET request.
