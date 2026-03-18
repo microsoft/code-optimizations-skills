@@ -32,17 +32,21 @@ Run the script in [get-metadata.md](scripts/get-metadata.md) to call the `profil
 
 ### 4. Trigger trace analysis
 
-Run the script in [trigger-trace-analysis.md](scripts/trigger-trace-analysis.md) to POST to the `profileTreeDefinitions` endpoint. This triggers the trace analysis using the `traceLocationId` and `redisCacheRegion` and must complete before fetching the profile tree.
+Run the script in [trigger-trace-analysis.md](scripts/trigger-trace-analysis.md) to POST to the `profileTreeDefinitions` endpoint. This triggers the trace analysis using the `traceLocationId` and `redisCacheRegion`.
 
-### 5. Fetch the root profile tree
+### 5. Poll for analysis completion
+
+Run the script in [poll-analysis-status.md](scripts/poll-analysis-status.md) to poll the `profileTreeComputeStatus` endpoint until the analysis is complete. This must succeed before fetching the profile tree.
+
+### 6. Fetch the root profile tree
 
 Run the script in [get-profile-tree.md](scripts/get-profile-tree.md) to call the `profileTreeDefinitions` endpoint. This returns the root call tree with the `HotPath` array (node indices) and top-level `Nodes`.
 
-### 6. Fetch child nodes to complete the hot path
+### 7. Fetch child nodes to complete the hot path
 
 The root tree usually only contains the first 1–2 levels of nodes. The remaining nodes in the `HotPath` are referenced by index in `ChildReferences` but not inline. Run the script in [get-child-nodes.md](scripts/get-child-nodes.md) iteratively to expand them.
 
-### 7. Present the hot path
+### 8. Present the hot path
 
 Once all hot path nodes are loaded, present the result using the format described in [present-hotpath.md](references/present-hotpath.md).
 
