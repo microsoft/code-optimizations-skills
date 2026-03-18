@@ -30,15 +30,19 @@ Run the script in [get-access-token.md](scripts/get-access-token.md) to acquire 
 
 Run the script in [get-metadata.md](scripts/get-metadata.md) to call the `profileTreeMetadata` endpoint and extract the `redisCacheRegion` value.
 
-### 4. Fetch the root profile tree
+### 4. Trigger trace analysis
+
+Run the script in [trigger-trace-analysis.md](scripts/trigger-trace-analysis.md) to POST to the `profileTreeDefinitions` endpoint. This triggers the trace analysis using the `traceLocationId` and `redisCacheRegion` and must complete before fetching the profile tree.
+
+### 5. Fetch the root profile tree
 
 Run the script in [get-profile-tree.md](scripts/get-profile-tree.md) to call the `profileTreeDefinitions` endpoint. This returns the root call tree with the `HotPath` array (node indices) and top-level `Nodes`.
 
-### 5. Fetch child nodes to complete the hot path
+### 6. Fetch child nodes to complete the hot path
 
 The root tree usually only contains the first 1–2 levels of nodes. The remaining nodes in the `HotPath` are referenced by index in `ChildReferences` but not inline. Run the script in [get-child-nodes.md](scripts/get-child-nodes.md) iteratively to expand them.
 
-### 6. Present the hot path
+### 7. Present the hot path
 
 Once all hot path nodes are loaded, present the result using the format described in [present-hotpath.md](references/present-hotpath.md).
 
