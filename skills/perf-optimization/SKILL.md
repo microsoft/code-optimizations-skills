@@ -1,5 +1,5 @@
 ---
-name: appinsights-profiler-perf-optimization
+name: perf-optimization
 description: Guide for analyzing performance issues based on profiler and code optimizations, including CPU, latency, and throughput. Use this when asked to investigate performance bottlenecks or optimize application performance.
 ---
 
@@ -7,15 +7,17 @@ description: Guide for analyzing performance issues based on profiler and code o
 
 When asked to analyze performance issues based on profiler data, follow these steps:
 
-1. **Identify the application insights resource**
+1. **Identify the Application Insights resource**
 
-2. **Find out the performance bottlenecks**
+2. **Query logs to find operations worth investigating** — Query the `requests`, `dependencies`, and `performanceCounters` tables to surface slow endpoints, high-latency dependencies, and resource pressure. Use this data to decide which specific operations deserve deeper profiler analysis.
 
-3. **Query code optimizations data**
+3. **Query Code Optimizations data** — Use `applicationinsights_recommendation_list` to get AI-powered recommendations based on profiler data. This is cheap and may already point to the right methods.
 
-4. **Putting data together to identify performance improvement opportunities**
+4. **Fetch profiler hot path for targeted operations** — Once you've identified the most impactful operations from steps 2–3, use the `get-profile-hotpath` skill to retrieve the call tree and hot path for specific traces. This is an expensive operation — only invoke it for operations that warrant deep investigation. See [Leveraging Profiler Hot Path Data](#leveraging-profiler-hot-path-data) for details.
 
-5. **Try provide code edits to optimize the performance**
+5. **Putting data together to identify performance improvement opportunities** — Correlate the hot path bottlenecks with code optimization recommendations and telemetry data to prioritize fixes.
+
+6. **Try provide code edits to optimize the performance** — When source code is available, suggest concrete code changes targeting the methods identified in the hot path.
 
 ## MCP Tools
 
@@ -104,15 +106,51 @@ List available table types in a Log Analytics workspace.
 - Required: `resource-group`, `workspace`
 - Optional: `subscription`
 
+## Leveraging Profiler Hot Path Data
+
+The `get-profile-hotpath` skill provides method-level profiler trace data. Invoke it to get the hot path call tree for a specific profiler trace, then use the results here for deeper analysis.
+
+### When to use the hot path data
+
+- Fetch the hot path only **after** log queries and code optimization recommendations have identified specific operations worth investigating — it is an expensive operation per request.
+- Use it to get method-level detail on **targeted** slow operations already surfaced by telemetry.
+- Cross-reference hot path methods with Code Optimization recommendations for actionable fixes.
+
+### How to use the hot path results
+
+The `get-profile-hotpath` skill returns a call tree with timing data. Use it as follows:
+
+1. **Identify the dominant method**: The hot path highlights the most expensive execution path. Focus optimization efforts on the methods consuming the most inclusive time (highest `Values.Metric`).
+2. **Classify the bottleneck type**: Check `TotalCpuTime`, `TotalAwaitTime`, and `TotalBlockedTime` from the root tree to determine if the issue is CPU-bound, I/O-bound, or contention-bound.
+3. **Correlate with telemetry**: Query the `requests` and `dependencies` tables filtered to the endpoint shown in the hot path to see overall latency percentiles and failure rates.
+4. **Match with Code Optimization recommendations**: Use `applicationinsights_recommendation_list` and match recommendations to the hot path methods for prioritized, data-backed fixes.
+5. **Target code changes**: If source code is available, navigate to the methods identified in the hot path and apply targeted optimizations.
+
+### Example workflow
+
+```
+1. User provides App Insights resource
+2. Query requests table for slow endpoints (p95 latency, error rates)
+3. Query dependencies table for high-latency external calls
+4. Query applicationinsights_recommendation_list for code optimization suggestions
+5. Identify the top operations worth deep-diving (e.g., GET /api/forecasts at p95 = 2s)
+6. Query customEvents for ServiceProfilerSample traces matching those operations
+7. Invoke get-profile-hotpath skill with the app ID and trace location ID
+8. Receive hot path call tree (e.g., WeatherForecastController.Get → 70% in ToList lambda)
+9. Combine hot path + telemetry + recommendations into prioritized action plan
+10. Suggest code changes targeting the hot path bottleneck methods
+```
+
 ## Tips
 
-- Always confirm the application insights resource with the user before proceeding with analysis.
+- Always confirm the Application Insights resource with the user before proceeding with analysis.
 - Always include the `subscription` parameter — it is required by the MCP server even though the schema marks it optional.
 - Extract the subscription ID from the resource ID path: `/subscriptions/{subscriptionId}/resourceGroups/...`
 - Use `monitor_resource_log_query` for targeted queries against a known Application Insights resource.
 - Query multiple tables in parallel (requests, customEvents, performanceCounters, dependencies) to build a complete picture quickly.
-- Use the profiler analysis guide to systematically analyze the profiler traces and identify bottlenecks.
-- When suggesting code optimizations, consider the context of the application and the specific performance issues identified.
+- When a profiler trace is available for a slow operation, invoke the `get-profile-hotpath` skill to get method-level bottleneck data — but only after telemetry has confirmed the operation is worth investigating.
+- Cross-reference hot path methods with Code Optimization recommendations for the highest-confidence optimization suggestions.
+- When suggesting code optimizations, target the specific methods identified in the hot path and consider the bottleneck type (CPU, I/O, contention).
 
 ## References
 
@@ -121,3 +159,6 @@ For detailed guidance on finding application insights resource, see:
 
 For detailed guidance on analyzing Application Insights Profiler traces, see:
 - [Profiler Analysis Guide](references/profiler-analysis-guide.md)
+
+For fetching and interpreting profiler hot path call trees, see:
+- [Get Profile Hot Path skill](../get-profile-hotpath/SKILL.md)
