@@ -7,17 +7,19 @@ description: Guide for analyzing performance issues based on profiler and code o
 
 When asked to analyze performance issues based on profiler data, follow these steps:
 
-1. **Identify the Application Insights resource**
+1. **Check investigation notes** — Check whether `investigation-notes.md` exists in the working directory. If it does, read it for existing Application Insights resource details (resource ID, app ID, subscription, resource group). Present any found values to the user and ask whether to reuse them or provide new ones. See [Investigation Notes](../shared/investigation-notes.md) for the file format and rules.
 
-2. **Query logs to find operations worth investigating** — Query the `requests`, `dependencies`, and `performanceCounters` tables to surface slow endpoints, high-latency dependencies, and resource pressure. Use this data to decide which specific operations deserve deeper profiler analysis.
+2. **Identify the Application Insights resource** — If the investigation notes didn't have the resource or the user wants a different one, follow the steps in [Identify Application Insights Resource](references/identify-appinsights-resource.md). After the resource is confirmed, **write or update `investigation-notes.md`** with the confirmed values.
 
-3. **Query Code Optimizations data** — Use `applicationinsights_recommendation_list` to get AI-powered recommendations based on profiler data. This is cheap and may already point to the right methods.
+3. **Query logs to find operations worth investigating** — Query the `requests`, `dependencies`, and `performanceCounters` tables to surface slow endpoints, high-latency dependencies, and resource pressure. Use this data to decide which specific operations deserve deeper profiler analysis.
 
-4. **Fetch profiler hot path for targeted operations** — Once you've identified the most impactful operations from steps 2–3, use the `get-profile-hotpath` skill to retrieve the call tree and hot path for specific traces. This is an expensive operation — only invoke it for operations that warrant deep investigation. See [Leveraging Profiler Hot Path Data](#leveraging-profiler-hot-path-data) for details.
+4. **Query Code Optimizations data** — Use `applicationinsights_recommendation_list` to get AI-powered recommendations based on profiler data. This is cheap and may already point to the right methods.
 
-5. **Putting data together to identify performance improvement opportunities** — Correlate the hot path bottlenecks with code optimization recommendations and telemetry data to prioritize fixes.
+5. **Fetch profiler hot path for targeted operations** — Once you've identified the most impactful operations from steps 3–4, use the `get-profile-hotpath` skill to retrieve the call tree and hot path for specific traces. This is an expensive operation — only invoke it for operations that warrant deep investigation. See [Leveraging Profiler Hot Path Data](#leveraging-profiler-hot-path-data) for details.
 
-6. **Try provide code edits to optimize the performance** — When source code is available, suggest concrete code changes targeting the methods identified in the hot path.
+6. **Putting data together to identify performance improvement opportunities** — Correlate the hot path bottlenecks with code optimization recommendations and telemetry data to prioritize fixes.
+
+7. **Try provide code edits to optimize the performance** — When source code is available, suggest concrete code changes targeting the methods identified in the hot path.
 
 ## MCP Tools
 
@@ -129,16 +131,17 @@ The `get-profile-hotpath` skill returns a call tree with timing data. Use it as 
 ### Example workflow
 
 ```
-1. User provides App Insights resource
-2. Query requests table for slow endpoints (p95 latency, error rates)
-3. Query dependencies table for high-latency external calls
-4. Query applicationinsights_recommendation_list for code optimization suggestions
-5. Identify the top operations worth deep-diving (e.g., GET /api/forecasts at p95 = 2s)
-6. Query customEvents for ServiceProfilerSample traces matching those operations
-7. Invoke get-profile-hotpath skill with the app ID and trace location ID
-8. Receive hot path call tree (e.g., WeatherForecastController.Get → 70% in ToList lambda)
-9. Combine hot path + telemetry + recommendations into prioritized action plan
-10. Suggest code changes targeting the hot path bottleneck methods
+1. Check investigation-notes.md for previously identified App Insights resource
+2. If found, confirm with user; if not, identify and write to investigation notes
+3. Query requests table for slow endpoints (p95 latency, error rates)
+4. Query dependencies table for high-latency external calls
+5. Query applicationinsights_recommendation_list for code optimization suggestions
+6. Identify the top operations worth deep-diving (e.g., GET /api/forecasts at p95 = 2s)
+7. Query customEvents for ServiceProfilerSample traces matching those operations
+8. Invoke get-profile-hotpath skill with the app ID and trace location ID
+9. Receive hot path call tree (e.g., WeatherForecastController.Get → 70% in ToList lambda)
+10. Combine hot path + telemetry + recommendations into prioritized action plan
+11. Suggest code changes targeting the hot path bottleneck methods
 ```
 
 ## Tips
@@ -153,6 +156,9 @@ The `get-profile-hotpath` skill returns a call tree with timing data. Use it as 
 - When suggesting code optimizations, target the specific methods identified in the hot path and consider the bottleneck type (CPU, I/O, contention).
 
 ## References
+
+For the investigation notes format and read/write protocol, see:
+- [Investigation Notes](../shared/investigation-notes.md)
 
 For detailed guidance on finding application insights resource, see:
 - [Identify Application Insights Resource](references/identify-appinsights-resource.md)
