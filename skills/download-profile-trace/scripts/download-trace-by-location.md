@@ -91,10 +91,14 @@ POST https://dataplane.diagnosticservices.azure.com/api/apps/{appId}/artifacts/b
 ```powershell
 $appId = "<APP_ID>"
 $traceLocationId = "<TRACE_LOCATION_ID>"  # e.g., "v1|stampid|appid|machine|1874|2026-03-20T21:55:35.9066175Z|/#1874/1/189/|2026-03-20T21:55:36.0751543Z|2026-03-20T21:55:39.0792972Z"
-# Derive a meaningful filename from the trace timestamp, e.g., "trace-2026-03-20T214135.etl.zip"
+# Include the role name to avoid collisions when downloading from multiple resources,
+# e.g., "trace-slowcpu-win-app-2026-03-20T214135.etl.zip"
 # Check the blobUri from the listing to determine the correct file extension (.etl, .etl.zip, .netperf)
 $outputPath = "<OUTPUT_FILE_PATH>"
 $correlationId = [guid]::NewGuid().ToString()
+
+# Always re-acquire the token in the same command block to avoid cross-session variable scoping issues
+$token = (az account get-access-token --resource "api://dataplane.diagnosticservices.azure.com" --query accessToken -o tsv)
 
 $encodedLocationId = [System.Uri]::EscapeDataString($traceLocationId)
 

@@ -35,9 +35,13 @@ After all inputs are confirmed, **write or update `investigation-notes.md`** wit
 
 Run the script in [get-access-token.md](scripts/get-access-token.md) to acquire a Bearer token for the profiler dataplane.
 
+> **Important — token freshness:** The `$token` variable only exists in the PowerShell session where it was set. If you run subsequent API calls in a different session (or if the variable is lost), you'll get `401 Unauthorized`. **Re-acquire the token in the same command block as each API call** to ensure it's always available. The token itself lasts ~85 minutes, but session-scoping is the more common cause of 401 errors.
+
 ### 4. List available profile traces
 
 Run the script in [list-profile-traces.md](scripts/list-profile-traces.md) to call the ingested artifacts endpoint and list available profiler traces.
+
+**Display only the 10 most recent traces by default.** If more traces exist, tell the user the total count and offer to show more. The API can return hundreds of traces for active applications, which produces overwhelming output.
 
 Present the results to the user with:
 - Timestamp (`triggerTime` — when the profiling session was triggered)
@@ -46,7 +50,7 @@ Present the results to the user with:
 - Artifact ID (note if null)
 - Format (Netperf or Etl)
 
-When constructing the output filename, use the `blobUri` from the selected trace to determine the correct file extension (e.g., `.etl`, `.etl.zip`, `.netperf`). Suggest a descriptive name based on the trace timestamp, e.g., `trace-2026-03-20T214135.etl.zip`.
+When constructing the output filename, use the `blobUri` from the selected trace to determine the correct file extension (e.g., `.etl`, `.etl.zip`, `.netperf`). Include the **role name** in the filename to avoid collisions when downloading traces from different resources into the same directory, e.g., `trace-slowcpu-win-app-2026-03-20T214135.etl.zip`.
 
 Let the user pick which trace to download. If there's only one result, confirm it with the user before proceeding.
 

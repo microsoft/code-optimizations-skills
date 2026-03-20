@@ -22,10 +22,14 @@ GET https://dataplane.diagnosticservices.azure.com/api/apps/{appId}/artifacts/{a
 ```powershell
 $appId = "<APP_ID>"
 $artifactId = "<ARTIFACT_ID>"
-# Derive a meaningful filename from the trace timestamp, e.g., "trace-2026-03-20T214135.etl"
+# Include the role name to avoid collisions when downloading from multiple resources,
+# e.g., "trace-slowcpu-win-app-2026-03-20T214135.etl.zip"
 # Check the blobUri from the listing to determine the correct file extension (.etl, .etl.zip, .netperf)
 $outputPath = "<OUTPUT_FILE_PATH>"
 $correlationId = [guid]::NewGuid().ToString()
+
+# Always re-acquire the token in the same command block to avoid cross-session variable scoping issues
+$token = (az account get-access-token --resource "api://dataplane.diagnosticservices.azure.com" --query accessToken -o tsv)
 
 $headers = @{
     "Authorization" = "Bearer $token"

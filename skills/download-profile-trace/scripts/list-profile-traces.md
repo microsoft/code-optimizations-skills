@@ -32,6 +32,9 @@ $appId = "<APP_ID>"
 $timeSpan = "P7D"
 $correlationId = [guid]::NewGuid().ToString()
 
+# Always re-acquire the token in the same command block to avoid cross-session variable scoping issues
+$token = (az account get-access-token --resource "api://dataplane.diagnosticservices.azure.com" --query accessToken -o tsv)
+
 $response = Invoke-RestMethod `
   -Uri "https://dataplane.diagnosticservices.azure.com/api/apps/$appId/artifacts/ingested?artifactKind=profile&timeSpan=$timeSpan&api-version=2024-03-06-preview" `
   -Method GET `
@@ -40,10 +43,14 @@ $response = Invoke-RestMethod `
     "x-ms-client-request-id" = $correlationId
   }
 
-# Display results
-$response | ForEach-Object {
+# Show total count and display the 10 most recent traces
+# The API can return hundreds of traces for active apps — limit output to avoid overwhelming the user
+Write-Host "Found $($response.Count) trace(s). Showing the 10 most recent:"
+$i = 1
+$response | Select-Object -First 10 | ForEach-Object {
     $id = if ($_.artifactId) { $_.artifactId } else { "(null)" }
-    Write-Host "ArtifactID: $id | Time: $($_.triggerTime) | Role: $($_.roleName) | Instance: $($_.roleInstance) | Format: $($_.format)"
+    Write-Host "[$i] ArtifactID: $id | Time: $($_.triggerTime) | Role: $($_.roleName) | Instance: $($_.roleInstance) | Format: $($_.format)"
+    $i++
 }
 ```
 
