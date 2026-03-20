@@ -64,8 +64,6 @@ The response is a JSON array of `IngestedArtifact` objects. Key fields:
 
 ### When `artifactId` is null
 
-Some traces have `artifactId: null`. This typically occurs with newer profiler versions or certain ingestion paths. When this happens, the trace **cannot** be downloaded using the standard artifact ID endpoint. Instead, use the **trace location ID** method described in [download-trace-by-location.md](download-trace-by-location.md).
-
-The trace location ID method uses `roleInstance` (machine name) and `triggerTime` (ETL session ID) to locate and download the trace.
+Some traces have `artifactId: null`. This typically occurs with newer profiler versions or certain ingestion paths. When this happens, run the [resolve-trace-identifiers](resolve-trace-identifiers.md) script to query `customEvents` for the artifact ID and/or trace location ID. If that fails, the trace can still be downloaded using the **trace location ID** method described in [download-trace-by-location.md](download-trace-by-location.md).
 
 Present the list to the user and let them choose which trace to download. Note whether `artifactId` is available or null for the selected trace, as this determines which download method to use.

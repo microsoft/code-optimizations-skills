@@ -63,18 +63,24 @@ Run the script in [download-trace.md](scripts/download-trace.md) with the select
 
 #### 5b. If `artifactId` is null
 
-Use the trace location ID method described in [download-trace-by-location.md](scripts/download-trace-by-location.md). This requires a **trace location ID**, which is a pipe-delimited string:
+First, run the script in [resolve-trace-identifiers.md](scripts/resolve-trace-identifiers.md) to query Application Insights `customEvents` for the `ServiceProfilerSample` event matching the selected trace. This can resolve:
+
+- **Artifact ID** (from `ServiceProfilerContext`) — if found, use the standard download in step 5a
+- **Trace location ID** (from `ServiceProfilerContent`) — if found, use the trace location download below
+
+If an **artifact ID** is resolved, go back to step 5a and download using that artifact ID.
+
+If only a **trace location ID** is resolved, use [download-trace-by-location.md](scripts/download-trace-by-location.md) to download. The trace location ID is a pipe-delimited v1 string:
 
 ```
 v1|{stampId}|{appId}|{machineName}|{processId}|{etlFileSessionId}
 ```
 
-- `appId`, `machineName` (`roleInstance`), and `etlFileSessionId` (`triggerTime`) are available from the trace listing.
-- `stampId` and `processId` must be provided by the user. Ask the user for the trace location ID, or for the missing `stampId` and `processId` values so you can construct it.
-
 The script:
 1. Calls `POST /artifacts/byArtifactLocation?t={traceLocationId}` to get a SAS-protected download URL
 2. Downloads the trace file from the returned URL
+
+If **neither identifier** is resolved from the query, ask the user for the trace location ID or artifact ID manually.
 
 ### 6. Present the result
 

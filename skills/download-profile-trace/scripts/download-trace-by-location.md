@@ -5,8 +5,8 @@ Download a profiler trace artifact using a **trace location ID** instead of an a
 ## When to use
 
 Use this method when:
-- The trace listing returns `artifactId: null` for the selected trace
-- You have a trace location ID from another source (e.g., Application Insights portal URL)
+- The trace listing returns `artifactId: null` for the selected trace and the [resolve-trace-identifiers](resolve-trace-identifiers.md) query did not return an artifact ID
+- You have a trace location ID from the resolve query (`ServiceProfilerContent`) or from another source (e.g., Application Insights portal URL)
 
 ## Trace location ID format
 
