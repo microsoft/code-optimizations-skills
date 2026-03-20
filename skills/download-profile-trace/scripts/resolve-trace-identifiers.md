@@ -29,13 +29,21 @@ The artifact ID is `a075ba6a3c054da895662a9c05def54a` (5th pipe-delimited field,
 
 ### Trace location ID from `ServiceProfilerContent`
 
-The v1 string format:
+The `ServiceProfilerContent` field contains a **full v1 trace location ID** (9 pipe-delimited fields) that includes the activity:
 
 ```
-v1|{stampId}|{appId}|{machineName}|{processId}|{etlFileSessionId}
+v1|{stampId}|{appId}|{machineName}|{processId}|{etlFileSessionId}|{activityId}|{activityStartTime}|{activityStopTime}
 ```
 
-See [download-trace-by-location.md](download-trace-by-location.md) for full format details.
+Example:
+
+```
+v1|westus2-ey2ahqc2dsyvq|d40e2d66-4e93-47c2-881e-71a758e09f54|8666f5e97d3e|1874|2026-03-20T21:55:35.9066175Z|/#1874/1/189/|2026-03-20T21:55:36.0751543Z|2026-03-20T21:55:39.0792972Z
+```
+
+The API accepts both the full 9-field format and the 6-field prefix format. Pass the full string as-is from `ServiceProfilerContent` — there is no need to truncate it.
+
+See [download-trace-by-location.md](download-trace-by-location.md) for full format details and download instructions.
 
 ## KQL query
 
@@ -57,23 +65,20 @@ To match a specific trace from the listing, add filters:
 
 ## PowerShell script
 
+> **Important — `az monitor app-insights query` quirks:**
+> - **Always pass `--offset`** matching your desired time range (e.g., `--offset P7D`). The CLI defaults to a 1-hour window that **overrides** any `ago()` or `between` in the KQL. Without this, queries will return incomplete or empty results.
+> - **Use single-line KQL.** Multi-line here-strings (`@"..."@`) are silently truncated by `az`, causing operators like `project` and `extend` to be dropped.
+
 ```powershell
 $appId = "<APP_ID>"
-$triggerTime = "<TRIGGER_TIME>"  # ISO 8601 timestamp from the selected trace, e.g., "2026-03-20T22:16:01.2093910Z"
+$triggerTime = "<TRIGGER_TIME>"  # ISO 8601 timestamp from the selected trace, e.g., "2026-03-20T21:56:12"
 $timeSpan = "P7D"  # Match the time range used in the trace listing
 
-# Build the KQL query, filtering around the selected trace's trigger time
-$query = @"
-customEvents
-| where name == 'ServiceProfilerSample'
-| where timestamp between (datetime('$triggerTime') - 2m .. datetime('$triggerTime') + 2m)
-| extend TraceLocationId = tostring(customDimensions.ServiceProfilerContent)
-| extend ProfilerContext = tostring(customDimensions.ServiceProfilerContext)
-| extend ArtifactId = extract('v2\\\\|[^|]*\\\\|[^|]*\\\\|[^|]*\\\\|([^|]+)', 1, ProfilerContext)
-| project timestamp, TraceLocationId, ArtifactId
-"@
+# Single-line KQL — multi-line here-strings are silently truncated by `az`
+$query = "customEvents | where name == 'ServiceProfilerSample' | where timestamp between (datetime('$triggerTime') - 2m .. datetime('$triggerTime') + 2m) | extend ctx = tostring(customDimensions.ServiceProfilerContext), content = tostring(customDimensions.ServiceProfilerContent) | project timestamp, ctx, content"
 
-$result = az monitor app-insights query --app $appId --analytics-query $query --output json | ConvertFrom-Json
+# --offset is critical: without it, az CLI defaults to a 1-hour window that overrides KQL time filters
+$result = az monitor app-insights query --app $appId --analytics-query $query --offset $timeSpan --output json | ConvertFrom-Json
 
 # Extract the first matching row
 $tables = $result.tables
@@ -81,8 +86,14 @@ if ($tables -and $tables.Count -gt 0) {
     $rows = $tables[0].rows
     if ($rows -and $rows.Count -gt 0) {
         $row = $rows[0]
-        $traceLocationId = $row[1]
-        $artifactId = $row[2]
+        $profilerContext = $row[1]
+        $traceLocationId = $row[2]
+
+        # Try to extract artifact ID from v2 context string
+        $artifactId = $null
+        if ($profilerContext -match '^v2\|[^|]*\|[^|]*\|[^|]*\|([^|]+)') {
+            $artifactId = $matches[1]
+        }
 
         if ($artifactId) {
             Write-Host "Resolved Artifact ID: $artifactId"

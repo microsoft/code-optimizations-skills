@@ -10,10 +10,18 @@ Use this method when:
 
 ## Trace location ID format
 
-The trace location ID is a pipe-delimited string with the following structure:
+The trace location ID is a pipe-delimited v1 string. The API accepts two forms:
+
+### Prefix form (6 fields) — for downloading a full trace session
 
 ```
 v1|{stampId}|{appId}|{machineName}|{processId}|{etlFileSessionId}
+```
+
+### Full form (9 fields) — for a specific activity within a trace session
+
+```
+v1|{stampId}|{appId}|{machineName}|{processId}|{etlFileSessionId}|{activityId}|{activityStartTime}|{activityStopTime}
 ```
 
 | Part | Description |
@@ -24,11 +32,22 @@ v1|{stampId}|{appId}|{machineName}|{processId}|{etlFileSessionId}
 | `machineName` | The machine or container instance name (maps to `roleInstance` from the trace listing) |
 | `processId` | The process ID (integer, must be non-zero; use `1` if unknown) |
 | `etlFileSessionId` | The profiling session start time in UTC (ISO 8601 format, maps to `triggerTime` from the trace listing) |
+| `activityId` | *(optional)* The activity path within the trace (e.g., `/#1874/1/189/`) |
+| `activityStartTime` | *(optional)* Activity start time in UTC (ISO 8601) |
+| `activityStopTime` | *(optional)* Activity stop time in UTC (ISO 8601) |
 
-### Example
+When the trace location ID comes from `ServiceProfilerContent` in the resolve step, it is typically the full 9-field form. Pass it as-is — there is no need to truncate it.
 
+### Examples
+
+Prefix form:
 ```
-v1|mystamp|d40e2d66-4e93-47c2-881e-71a758e09f54|8666f5e97d3e|1|2026-03-20T21:41:35.8314098Z
+v1|westus2-ey2ahqc2dsyvq|d40e2d66-4e93-47c2-881e-71a758e09f54|8666f5e97d3e|1|2026-03-20T21:41:35.8314098Z
+```
+
+Full form (from `ServiceProfilerContent`):
+```
+v1|westus2-ey2ahqc2dsyvq|d40e2d66-4e93-47c2-881e-71a758e09f54|8666f5e97d3e|1874|2026-03-20T21:55:35.9066175Z|/#1874/1/189/|2026-03-20T21:55:36.0751543Z|2026-03-20T21:55:39.0792972Z
 ```
 
 ## Request
@@ -37,11 +56,19 @@ v1|mystamp|d40e2d66-4e93-47c2-881e-71a758e09f54|8666f5e97d3e|1|2026-03-20T21:41:
 POST https://dataplane.diagnosticservices.azure.com/api/apps/{appId}/artifacts/byArtifactLocation?t={traceLocationId}&api-version=2025-03-19-preview
 ```
 
+> **Important:** This endpoint requires the trace location ID in **two places**:
+> 1. The `t` query parameter (for controller model binding)
+> 2. A JSON request body with `{"traceLocationId": "..."}` (for the authorization filter that validates the app ID)
+>
+> Omitting the body causes a `400 Bad Request` with `"Artifact location properties can't be fetched."`.
+> Omitting the query parameter causes a `400` with `"The traceLocationId field is required."`.
+
 ### Headers
 
 | Header | Value |
 |---|---|
 | `Authorization` | `Bearer {token}` |
+| `Content-Type` | `application/json` |
 | `x-ms-client-request-id` | A new GUID for correlation |
 
 ### Query Parameters
@@ -51,11 +78,19 @@ POST https://dataplane.diagnosticservices.azure.com/api/apps/{appId}/artifacts/b
 | `t` | Yes | The trace location ID (URL-encoded) |
 | `api-version` | Yes | Must be `2025-03-19-preview` or later |
 
+### Request Body
+
+```json
+{
+  "traceLocationId": "v1|{stampId}|{appId}|{machineName}|{processId}|{etlFileSessionId}|..."
+}
+```
+
 ## PowerShell script
 
 ```powershell
 $appId = "<APP_ID>"
-$traceLocationId = "<TRACE_LOCATION_ID>"  # e.g., "v1|stampid|appid|machine|1|2026-03-20T21:41:35.8314098Z"
+$traceLocationId = "<TRACE_LOCATION_ID>"  # e.g., "v1|stampid|appid|machine|1874|2026-03-20T21:55:35.9066175Z|/#1874/1/189/|2026-03-20T21:55:36.0751543Z|2026-03-20T21:55:39.0792972Z"
 # Derive a meaningful filename from the trace timestamp, e.g., "trace-2026-03-20T214135.etl.zip"
 # Check the blobUri from the listing to determine the correct file extension (.etl, .etl.zip, .netperf)
 $outputPath = "<OUTPUT_FILE_PATH>"
@@ -65,14 +100,19 @@ $encodedLocationId = [System.Uri]::EscapeDataString($traceLocationId)
 
 $headers = @{
     "Authorization" = "Bearer $token"
+    "Content-Type" = "application/json"
     "x-ms-client-request-id" = $correlationId
 }
+
+# The body is required for the authorization filter; the query param is required for controller binding
+$body = @{ traceLocationId = $traceLocationId } | ConvertTo-Json
 
 # Step 1: Get the SAS-protected download URL
 $response = Invoke-RestMethod `
   -Uri "https://dataplane.diagnosticservices.azure.com/api/apps/$appId/artifacts/byArtifactLocation?t=$encodedLocationId&api-version=2025-03-19-preview" `
   -Method POST `
-  -Headers $headers
+  -Headers $headers `
+  -Body $body
 
 $downloadUrl = $response.downloadUrl
 Write-Host "Download URL obtained."
