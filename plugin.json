@@ -1,5 +1,5 @@
 {
-  "name": "performance-optimization-copilot",
+  "name": "perf-copilot",
   "description": "Performance optimization skills and Azure monitoring integrations for GitHub Copilot CLI",
   "version": "0.1.0",
   "author": {

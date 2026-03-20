@@ -8,9 +8,9 @@ A [GitHub Copilot CLI](https://docs.github.com/en/copilot/github-copilot-in-the-
 
 | Skill | Description |
 |-------|-------------|
-| **perf-profiling** | Guides through profiling workflows for CPU, latency, and request performance |
-| **memory-analysis** | Assists with memory leak detection, heap analysis, and GC diagnostics |
-| **load-testing** | Helps set up and analyze load/stress tests with common tools |
+| **perf-optimization** | Analyzes performance issues using Application Insights telemetry, Code Optimizations, and profiler hot paths to identify CPU, latency, and throughput bottlenecks |
+| **get-profile-hotpath** | Fetches and displays the hot path call tree from an Application Insights Profiler trace for method-level bottleneck analysis |
+| **download-profile-trace** | Downloads raw profiler trace files (.etl, .netperf) from the Application Insights Profiler dataplane API for offline analysis in PerfView or Visual Studio |
 
 ### MCP Server
 
@@ -44,30 +44,28 @@ copilot plugin install ./performance-optimization-copilot
 Once installed, the skills are automatically available in Copilot CLI conversations:
 
 ```bash
-# Ask about profiling
-copilot "How do I profile my .NET application?"
+# Investigate a slow endpoint
+copilot "Help me find out why my API is slow"
 
-# Ask about memory issues
-copilot "Help me investigate a memory leak in my Node.js app"
+# Analyze a profiler trace
+copilot "Get the hot path from my latest profiler trace"
 
-# Ask about load testing
-copilot "Set up a k6 load test for my API"
+# Download a trace for offline analysis
+copilot "Download a profiler trace from my App Insights resource"
 ```
 
 ## Project Structure
 
 ```
-├── plugin.json                       # Plugin manifest
-├── .mcp.json                         # Azure MCP server configuration
+├── plugin.json                                  # Plugin manifest
+├── .mcp.json                                    # Azure MCP server configuration
 ├── skills/
-│   ├── perf-profiling/SKILL.md       # Performance profiling skill
-│   ├── memory-analysis/SKILL.md      # Memory analysis skill
-│   └── load-testing/SKILL.md         # Load testing skill
+│   ├── perf-optimization/SKILL.md               # Performance analysis & optimization skill
+│   ├── get-profile-hotpath/SKILL.md             # Profiler hot path call tree skill
+│   ├── download-profile-trace/SKILL.md          # Trace file download skill
+│   └── shared/investigation-notes.md            # Shared investigation context template
 ├── agents/
-│   └── perf-optimizer.agent.md       # Performance optimizer agent
-├── .github/
-│   └── plugin/
-│       └── marketplace.json          # Marketplace manifest
+│   └── perf-optimizer.agent.md                  # Performance optimizer agent
 ├── README.md
 └── LICENSE
 ```
