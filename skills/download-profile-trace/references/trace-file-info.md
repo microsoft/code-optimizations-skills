@@ -9,9 +9,12 @@ The downloaded artifact is a raw profiler trace captured by Application Insights
 | Format | Extension | Description |
 |---|---|---|
 | ETL (Event Trace Log) | `.etl` | Windows ETW trace format. The most common format for .NET Framework and .NET on Windows. |
+| ETL (zipped) | `.etl.zip` | A zipped ETL file. Common for traces from Linux containers. **Extract the `.zip` before opening.** |
 | NetPerf / NetTrace | `.netperf`, `.nettrace` | Cross-platform .NET trace format. Common for .NET on Linux containers (e.g., AKS). |
 
-The actual format depends on the platform where the profiled application runs.
+The actual format depends on the platform where the profiled application runs. The `blobUri` from the trace listing reveals the real file extension (e.g., `.etl.zip`). The `format` field in the listing (e.g., `Netperf`, `Etl`) indicates the trace format but not the compression — always check the `blobUri` extension.
+
+> **Tip**: If the downloaded file has a `.zip` extension, extract it first to get the raw trace file before opening in analysis tools.
 
 ## How to open trace files
 

@@ -1,6 +1,8 @@
-# Download Trace
+# Download Trace by Artifact ID
 
-Download a profiler trace artifact by its artifact ID. The API returns a **302 redirect** to a SAS-protected blob URL. Since the SAS token in the redirect URL provides its own authentication, PowerShell can follow the redirect automatically — no special redirect handling is needed.
+Download a profiler trace artifact by its artifact ID. This method requires a **non-null `artifactId`** from the trace listing. If `artifactId` is null, use the [trace location ID method](download-trace-by-location.md) instead.
+
+The API returns a **302 redirect** to a SAS-protected blob URL. Since the SAS token in the redirect URL provides its own authentication, PowerShell can follow the redirect automatically — no special redirect handling is needed.
 
 ## Request
 
@@ -20,7 +22,9 @@ GET https://dataplane.diagnosticservices.azure.com/api/apps/{appId}/artifacts/{a
 ```powershell
 $appId = "<APP_ID>"
 $artifactId = "<ARTIFACT_ID>"
-$outputPath = "<OUTPUT_FILE_PATH>"  # e.g., ".\trace.etl" or ".\trace.netperf"
+# Derive a meaningful filename from the trace timestamp, e.g., "trace-2026-03-20T214135.etl"
+# Check the blobUri from the listing to determine the correct file extension (.etl, .etl.zip, .netperf)
+$outputPath = "<OUTPUT_FILE_PATH>"
 $correlationId = [guid]::NewGuid().ToString()
 
 $headers = @{

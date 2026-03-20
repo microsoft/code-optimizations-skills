@@ -42,7 +42,8 @@ $response = Invoke-RestMethod `
 
 # Display results
 $response | ForEach-Object {
-    Write-Host "ID: $($_.artifactId) | Time: $($_.createdTimeUtc) | Role: $($_.roleName) | Machine: $($_.machineName)"
+    $id = if ($_.artifactId) { $_.artifactId } else { "(null)" }
+    Write-Host "ArtifactID: $id | Time: $($_.triggerTime) | Role: $($_.roleName) | Instance: $($_.roleInstance) | Format: $($_.format)"
 }
 ```
 
@@ -52,10 +53,19 @@ The response is a JSON array of `IngestedArtifact` objects. Key fields:
 
 | Field | Description |
 |---|---|
-| `artifactId` | GUID — use this to download the trace |
-| `createdTimeUtc` | When the trace was captured |
-| `roleName` | The role (e.g., web, worker) |
-| `machineName` | The machine that produced the trace |
-| `artifactKind` | Always `profile` when filtered |
+| `artifactId` | GUID for downloading the trace. **May be `null`** — see note below. |
+| `triggerTime` | When the profiling session was triggered (ISO 8601 UTC timestamp) |
+| `roleName` | The cloud role name (e.g., `web`, `worker`, app name) |
+| `roleInstance` | The machine/container instance that produced the trace |
+| `format` | Trace format: `Netperf` (Linux/.NET) or `Etl` (Windows) |
+| `blobUri` | Internal blob storage URI for the trace file |
+| `artifactKind` | Always `Profile` when filtered |
+| `trigger` | What triggered the profiling session |
 
-Present the list to the user and let them choose which trace to download.
+### When `artifactId` is null
+
+Some traces have `artifactId: null`. This typically occurs with newer profiler versions or certain ingestion paths. When this happens, the trace **cannot** be downloaded using the standard artifact ID endpoint. Instead, use the **trace location ID** method described in [download-trace-by-location.md](download-trace-by-location.md).
+
+The trace location ID method uses `roleInstance` (machine name) and `triggerTime` (ETL session ID) to locate and download the trace.
+
+Present the list to the user and let them choose which trace to download. Note whether `artifactId` is available or null for the selected trace, as this determines which download method to use.

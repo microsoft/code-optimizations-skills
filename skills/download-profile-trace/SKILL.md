@@ -40,25 +40,48 @@ Run the script in [get-access-token.md](scripts/get-access-token.md) to acquire 
 Run the script in [list-profile-traces.md](scripts/list-profile-traces.md) to call the ingested artifacts endpoint and list available profiler traces.
 
 Present the results to the user with:
-- Timestamp (when the trace was captured)
+- Timestamp (`triggerTime` — when the profiling session was triggered)
 - Role name
-- Machine name
-- Artifact ID
+- Role instance (machine/container name)
+- Artifact ID (note if null)
+- Format (Netperf or Etl)
+
+When constructing the output filename, use the `blobUri` from the selected trace to determine the correct file extension (e.g., `.etl`, `.etl.zip`, `.netperf`). Suggest a descriptive name based on the trace timestamp, e.g., `trace-2026-03-20T214135.etl.zip`.
 
 Let the user pick which trace to download. If there's only one result, confirm it with the user before proceeding.
 
 ### 5. Download the selected trace
 
+Choose the download method based on whether the selected trace has an `artifactId`:
+
+#### 5a. If `artifactId` is available (not null)
+
 Run the script in [download-trace.md](scripts/download-trace.md) with the selected `artifactId`. The script:
-1. Calls the artifact download endpoint
+1. Calls the artifact download endpoint (`GET /artifacts/{artifactId}`)
 2. Handles the 302 redirect to get the blob download URL
 3. Downloads the trace file to the specified output path
+
+#### 5b. If `artifactId` is null
+
+Use the trace location ID method described in [download-trace-by-location.md](scripts/download-trace-by-location.md). This requires a **trace location ID**, which is a pipe-delimited string:
+
+```
+v1|{stampId}|{appId}|{machineName}|{processId}|{etlFileSessionId}
+```
+
+- `appId`, `machineName` (`roleInstance`), and `etlFileSessionId` (`triggerTime`) are available from the trace listing.
+- `stampId` and `processId` must be provided by the user. Ask the user for the trace location ID, or for the missing `stampId` and `processId` values so you can construct it.
+
+The script:
+1. Calls `POST /artifacts/byArtifactLocation?t={traceLocationId}` to get a SAS-protected download URL
+2. Downloads the trace file from the returned URL
 
 ### 6. Present the result
 
 After downloading, tell the user:
 - Where the file was saved
 - The file size
+- If the file is a `.zip`, remind the user to extract it before analysis
 - How to open it — see [trace-file-info.md](references/trace-file-info.md) for guidance on tools and formats
 
 ## Response format
