@@ -12,7 +12,7 @@ GET https://dataplane.diagnosticservices.azure.com/api/apps/{appId}/insights/rol
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
-| `appId` | Yes | Application Insights app ID (GUID). Resolve from resource ID using [resolve-app-id.md](resolve-app-id.md) if needed. |
+| `appId` | Yes | Application Insights app ID (GUID). Resolve from resource ID using [resolve-app-id.md](../../shared/resolve-app-id.md) if needed. |
 | `startTime` | Yes | ISO 8601 UTC timestamp — start of analysis window |
 | `endTime` | Yes | ISO 8601 UTC timestamp — end of analysis window |
 

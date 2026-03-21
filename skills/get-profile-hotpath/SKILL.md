@@ -19,22 +19,31 @@ This skill fetches the hot path call tree from an Application Insights Profiler 
 Before asking the user for inputs, check whether `investigation-notes.md` exists in the working directory. If it does, read it for existing Application Insights details (especially **App ID** and **Resource ID**). See [Investigation Notes](../shared/investigation-notes.md) for the file format and rules.
 
 - If an **App ID** is found, present it to the user and ask whether to reuse it or provide a different one.
-- If only a **Resource ID** is found (no App ID), resolve the App ID by running the script in [resolve-app-id.md](scripts/resolve-app-id.md), then confirm with the user.
+- If only a **Resource ID** is found (no App ID), resolve the App ID by running the script in [resolve-app-id.md](../shared/resolve-app-id.md), then confirm with the user.
 - If the user confirms, skip asking for the App ID in the next step.
 
 ### 2. Gather inputs
 
 Ask the user for any values not already obtained from the investigation notes:
-- **App ID**: The Application Insights app ID (GUID). If the user provides a resource ID instead, resolve it by running the script in [resolve-app-id.md](scripts/resolve-app-id.md).
+- **App ID**: The Application Insights app ID (GUID). If the user provides a resource ID instead, resolve it by running the script in [resolve-app-id.md](../shared/resolve-app-id.md).
 - **Trace location ID**: The full `ServiceProfilerContent` string, which looks like: `v1|{stampId}|{dataCube}|{machineName}|{processId}|{sessionId}|{activityPath}|{startTime}|{endTime}`
 
 If the user doesn't have a trace location ID, help them find one by querying profiler samples — see [find-profiler-traces.md](scripts/find-profiler-traces.md).
 
 After all inputs are confirmed, **write or update `investigation-notes.md`** with the App ID and any other resolved values (Resource ID, Subscription ID, Resource Group). See [Investigation Notes](../shared/investigation-notes.md).
 
+### 3–8. Fetch the hot path (combined pipeline)
+
+For efficiency, use the combined pipeline script [get-hotpath-pipeline.md](scripts/get-hotpath-pipeline.md) which performs steps 3–8 in a single PowerShell block: token acquisition → metadata → trigger → poll → root tree → child node expansion. This is the **preferred approach** — it reduces tool calls from 5–6 down to 1–2.
+
+If you need finer control or want to debug individual steps, the granular scripts below remain available.
+
+<details>
+<summary>Individual steps (3–8) for debugging</summary>
+
 ### 3. Acquire an access token
 
-Run the script in [get-access-token.md](scripts/get-access-token.md) to acquire a Bearer token for the profiler dataplane.
+Run the script in [get-access-token.md](../shared/get-access-token.md) to acquire a Bearer token for the profiler dataplane.
 
 > **Important — token freshness:** The `$token` variable only exists in the PowerShell session where it was set. If you run subsequent API calls in a different session (or if the variable is lost), you'll get `401 Unauthorized`. **Re-acquire the token in the same command block as each API call** to ensure it's always available. The token itself lasts ~85 minutes, but session-scoping is the more common cause of 401 errors. This is especially critical during the polling loop in step 6, which may run for over a minute.
 
@@ -59,6 +68,8 @@ Run the script in [get-profile-tree.md](scripts/get-profile-tree.md) to call the
 ### 8. Fetch child nodes to complete the hot path
 
 The root tree usually only contains the first 1–2 levels of nodes. The remaining nodes in the `HotPath` are referenced by index in `ChildReferences` but not inline. Run the script in [get-child-nodes.md](scripts/get-child-nodes.md) iteratively to expand them.
+
+</details>
 
 ### 9. Present the hot path
 

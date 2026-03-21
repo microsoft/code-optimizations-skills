@@ -53,14 +53,17 @@ $delaySeconds = 2
 for ($i = 1; $i -le $maxAttempts; $i++) {
     # Use Invoke-WebRequest with -MaximumRedirection 0 to prevent auto-following
     # 302 redirects, which would strip the Authorization header and cause 401 errors.
-    $response = Invoke-WebRequest -Uri $statusUri -Method GET -Headers $headers `
-        -MaximumRedirection 0 -SkipHttpErrorCheck
-
-    if ($response.StatusCode -eq 302) {
-        # 302 means the analysis is complete — the redirect points to the result.
-        # Do NOT follow it here; proceed to step 7 to fetch the profile tree via GET.
-        Write-Host "Poll $i — 302 redirect received. Trace analysis is complete."
-        break
+    try {
+        $response = Invoke-WebRequest -Uri $statusUri -Method GET -Headers $headers `
+            -MaximumRedirection 0 -SkipHttpErrorCheck
+    } catch {
+        # PowerShell throws on 302 even with -SkipHttpErrorCheck when -MaximumRedirection 0 is set.
+        # Check if this is a 302 redirect (analysis complete signal).
+        if ($_.Exception.Response.StatusCode -eq 302 -or $_.Exception.Response.StatusCode.value__ -eq 302) {
+            Write-Host "Poll $i — 302 redirect received. Trace analysis is complete."
+            break
+        }
+        throw  # Re-throw if it's not a 302
     }
 
     if ($response.StatusCode -eq 401) {
@@ -100,7 +103,7 @@ if ($i -gt $maxAttempts) {
 }
 ```
 
-> **Why `-MaximumRedirection 0`?** When the analysis finishes, the status endpoint returns a 302 redirect to the profile tree result. PowerShell's default behaviour follows the redirect automatically but strips the `Authorization` header, resulting in a 401. Disabling auto-redirect lets us detect the 302 as a "complete" signal and fetch the tree properly in the next step (with the auth header preserved).
+> **Why `-MaximumRedirection 0` and `try-catch`?** When the analysis finishes, the status endpoint returns a 302 redirect to the profile tree result. PowerShell's default behaviour follows the redirect automatically but strips the `Authorization` header, resulting in a 401. Disabling auto-redirect with `-MaximumRedirection 0` lets us detect the 302 as a "complete" signal. However, PowerShell throws a `WebException` on 302 responses even when `-SkipHttpErrorCheck` is set, so the `try-catch` block is required to catch the exception and check if it's a 302 redirect. Non-302 exceptions are re-thrown.
 
 ## Behaviour
 

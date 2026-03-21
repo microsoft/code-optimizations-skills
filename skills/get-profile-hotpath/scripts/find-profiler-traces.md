@@ -4,11 +4,17 @@ If the user doesn't have a specific trace location ID, query the Application Ins
 
 This requires the Application Insights **resource ID** (not the app ID). Use the `az monitor app-insights query` command:
 
+> **Important — `--offset` is required:** The `az monitor app-insights query` CLI defaults to a 1-hour window that **overrides** any `ago()` or time-based filters in the KQL query. Always pass `--offset` matching your desired lookback period (e.g., `P7D` for 7 days, `P1D` for 1 day). Without this parameter, queries for traces older than 1 hour will silently return empty results.
+
 ## Basic query (traces with correlated request operations)
 
 ```powershell
+# Adjust the lookback period to match the investigation window (e.g., P7D = 7 days, P1D = 1 day)
+$timeSpan = "P7D"
+
 az monitor app-insights query \
   --apps "<RESOURCE_ID>" \
+  --offset $timeSpan \
   --analytics-query "
     let traces = customEvents
     | where name == 'ServiceProfilerSample'
@@ -40,8 +46,12 @@ If the join produces too many or too few results (due to timestamp precision), u
 **Step 1** — List recent traces:
 
 ```powershell
+# Adjust the lookback period to match the investigation window (e.g., P7D = 7 days, P1D = 1 day)
+$timeSpan = "P7D"
+
 az monitor app-insights query \
   --apps "<RESOURCE_ID>" \
+  --offset $timeSpan \
   --analytics-query "
     customEvents
     | where name == 'ServiceProfilerSample'
@@ -62,8 +72,12 @@ az monitor app-insights query \
 **Step 2** — Look up which requests were active during a specific trace's time window:
 
 ```powershell
+# Use the same lookback period as step 1
+$timeSpan = "P7D"
+
 az monitor app-insights query \
   --apps "<RESOURCE_ID>" \
+  --offset $timeSpan \
   --analytics-query "
     requests
     | where timestamp >= datetime('<requestStartTime>') and timestamp <= datetime('<requestEndTime>')
@@ -97,6 +111,18 @@ When multiple traces are available, use these criteria to pick the best one:
 - **Match timestamps to findings**: align the trace timestamps with the time range of the Code Optimization findings or the performance incident being investigated.
 - **Match machine/role**: if the Code Optimization recommendation includes a `roleName`, prefer traces from the same machine or role instance.
 - **Consider the operation**: if the correlated request operation (e.g., `GET /HighCPUAsync/4000`) matches the endpoint under investigation, that trace is more relevant than one from an unrelated endpoint (e.g., `GET /Sleep/1000`).
+
+## Filtering by operation name
+
+When Code Optimizations has identified a specific bottleneck operation (e.g., `HighCPUAsync`), you can narrow the trace list to traces that overlap with requests to that endpoint. Use the two-step approach above (step 1 for traces, step 2 for requests) and match the request `name` field against the operation identified in the Code Optimization recommendation's `parentFunction` or `function` field.
+
+Alternatively, add a duration filter to the basic query to focus on longer traces more likely to contain the target operation:
+
+```kql
+| where traceDurationMs > 2000
+```
+
+This is especially useful for CPU investigations where longer traces contain more samples and give clearer hot paths.
 
 ## Presenting traces to the user
 

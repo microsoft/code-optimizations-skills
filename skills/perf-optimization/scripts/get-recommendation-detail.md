@@ -51,7 +51,11 @@ $response = Invoke-RestMethod `
     "x-ms-client-request-id" = $correlationId
   }
 
-Write-Host $response.recommendation
+if ([string]::IsNullOrWhiteSpace($response.recommendation)) {
+    Write-Host "No AI recommendation available for this insight. Proceed with manual analysis using the profiler hot path data, source code inspection, and the issue details from the rollups response (issueCategory, function, symbol, context, value/criteria)."
+} else {
+    Write-Host $response.recommendation
+}
 ```
 
 ## Handling empty recommendations
