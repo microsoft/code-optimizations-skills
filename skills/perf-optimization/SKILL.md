@@ -15,6 +15,8 @@ When asked to analyze performance issues based on profiler data, follow these st
 
    > **Why start here**: This step surfaces real slow requests with profiler traces attached, so you can prioritize which operations to investigate. Use the results to guide the Code Optimization and hot path analysis steps that follow.
 
+   > **⚠️ CLI query pitfalls**: The `az monitor app-insights query` CLI has known issues that cause silent failures. Before running or modifying the query script, read [az CLI query pitfalls](../shared/az-cli-query-pitfalls.md). Key points: (1) `--offset` is **mandatory** — without it the CLI applies a 1-hour server-side filter that overrides KQL `ago()`, (2) always use `--output json` — `--output table` silently drops results for join queries, (3) flatten KQL to a single line to avoid here-string truncation.
+
 4. **Query Code Optimizations data** — Run the script in [get-code-optimizations.md](scripts/get-code-optimizations.md) to fetch AI-powered recommendations from the profiler dataplane API. This is cheap and fast — it often points directly to the right methods without needing deeper analysis.
 
    > **If no recommendations are found**: This may happen when the Application Insights Profiler hasn't collected enough data, or the profiler isn't actively running. Try these fallback steps:
@@ -79,6 +81,9 @@ The `get-profile-hotpath` skill returns a call tree with timing data. Use it as 
 
 For the investigation notes format and read/write protocol, see:
 - [Investigation Notes](../shared/investigation-notes.md)
+
+For known `az monitor app-insights query` CLI issues, see:
+- [az CLI Query Pitfalls](../shared/az-cli-query-pitfalls.md)
 
 For detailed guidance on finding application insights resource, see:
 - [Identify Application Insights Resource](references/identify-appinsights-resource.md)
