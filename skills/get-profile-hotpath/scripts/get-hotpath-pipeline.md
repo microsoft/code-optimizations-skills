@@ -46,15 +46,31 @@ $triggerHeaders = @{
     "x-ms-client-request-id" = [guid]::NewGuid().ToString()
 }
 
-$triggerResponse = Invoke-WebRequest `
-  -Uri "https://dataplane.diagnosticservices.azure.com/api/apps/$appId/profileTreedefinitions?api-version=2024-03-06-preview" `
-  -Method POST -Headers $triggerHeaders -ContentType "application/json" -Body $body `
-  -MaximumRedirection 0 -SkipHttpErrorCheck -ErrorAction SilentlyContinue
-
 $skipPoll = $false
 $rootTree = $null
 
-if ($triggerResponse.StatusCode -eq 302) {
+try {
+    $triggerResponse = Invoke-WebRequest `
+      -Uri "https://dataplane.diagnosticservices.azure.com/api/apps/$appId/profileTreedefinitions?api-version=2024-03-06-preview" `
+      -Method POST -Headers $triggerHeaders -ContentType "application/json" -Body $body `
+      -MaximumRedirection 0 -SkipHttpErrorCheck -ErrorAction SilentlyContinue
+} catch {
+    if ($_.Exception.Response.StatusCode -eq 302 -or $_.Exception.Response.StatusCode.value__ -eq 302) {
+        $redirectUrl = "https://dataplane.diagnosticservices.azure.com$($_.Exception.Response.Headers.Location)"
+        Write-Host "Analysis cached (302 exception). Following redirect..."
+        $rootTree = Invoke-RestMethod -Uri $redirectUrl -Method GET -Headers @{
+            "Authorization" = "Bearer $token"
+            "x-ms-client-request-id" = [guid]::NewGuid().ToString()
+        }
+        $skipPoll = $true
+    } else {
+        throw
+    }
+}
+
+if ($skipPoll) {
+    # 302 was already handled in the catch block
+} elseif ($triggerResponse.StatusCode -eq 302) {
     $redirectUrl = "https://dataplane.diagnosticservices.azure.com$($triggerResponse.Headers['Location'])"
     Write-Host "Analysis cached. Following redirect..."
     $rootTree = Invoke-RestMethod -Uri $redirectUrl -Method GET -Headers @{
@@ -97,6 +113,11 @@ if (-not $skipPoll) {
             continue
         }
 
+        if ($pollResponse.StatusCode -eq 302) {
+            Write-Host "Poll $i - Analysis complete (302 redirect)."
+            break
+        }
+
         if ($pollResponse.StatusCode -ne 200) {
             Write-Host "Poll $i - Status: $($pollResponse.StatusCode)"
             Start-Sleep -Seconds $delaySeconds
@@ -125,10 +146,10 @@ Write-Host "CPU: $($rootTree.TotalCpuTime)ms | Await: $($rootTree.TotalAwaitTime
 Write-Host "HotPath indices: $($rootTree.HotPath -join ', ')"
 
 # --- Step 7: Expand child nodes along hot path ---
-$loadedNodes = @{}
+$loadedNodes = [System.Collections.Generic.Dictionary[string,object]]::new()
 function Collect-Nodes($nodes) {
     foreach ($n in $nodes) {
-        $loadedNodes[$n.Meta.Index] = $n
+        $loadedNodes[[string]$n.Meta.Index] = $n
         if ($n.Nodes) { Collect-Nodes $n.Nodes }
     }
 }
@@ -141,12 +162,17 @@ for ($round = 1; $round -le $maxRounds; $round++) {
     # Collect pending indices from hot path and from loaded nodes' ChildReferences
     $pending = @()
     foreach ($idx in $rootTree.HotPath) {
-        if (-not $loadedNodes.ContainsKey($idx)) { $pending += $idx }
+        if (-not $loadedNodes.ContainsKey([string]$idx)) { $pending += [string]$idx }
     }
-    foreach ($node in $loadedNodes.Values) {
-        if ($node.ChildReferences) {
-            foreach ($cr in $node.ChildReferences) {
-                if (-not $loadedNodes.ContainsKey($cr)) { $pending += $cr }
+    foreach ($idx in $rootTree.HotPath) {
+        $hpKey = [string]$idx
+        if ($loadedNodes.ContainsKey($hpKey)) {
+            $node = $loadedNodes[$hpKey]
+            if ($node.ChildReferences) {
+                foreach ($cr in $node.ChildReferences) {
+                    $crKey = [string]$cr
+                    if (-not $loadedNodes.ContainsKey($crKey)) { $pending += $crKey }
+                }
             }
         }
     }
@@ -166,8 +192,8 @@ for ($round = 1; $round -le $maxRounds; $round++) {
 
     $newCount = 0
     foreach ($node in $childNodes) {
-        if (-not $loadedNodes.ContainsKey($node.Meta.Index)) { $newCount++ }
-        $loadedNodes[$node.Meta.Index] = $node
+        if (-not $loadedNodes.ContainsKey([string]$node.Meta.Index)) { $newCount++ }
+        $loadedNodes[[string]$node.Meta.Index] = $node
     }
     if ($newCount -eq 0) { break }
 }
@@ -175,16 +201,16 @@ for ($round = 1; $round -le $maxRounds; $round++) {
 # --- Step 8: Output hot path nodes ---
 Write-Host "`n--- HOT PATH NODES ---"
 foreach ($idx in $rootTree.HotPath) {
-    if ($loadedNodes.ContainsKey($idx)) {
-        $node = $loadedNodes[$idx]
+    if ($loadedNodes.ContainsKey([string]$idx)) {
+        $node = $loadedNodes[[string]$idx]
         $pct = [math]::Round(($node.Values.Metric / $rootTree.WallClockMSec) * 100, 1)
         Write-Host "[$idx] $($node.Values.Metric)ms ($pct%) - $($node.Meta.Label)"
 
         # Show immediate children of hot path nodes
         if ($node.ChildReferences) {
             foreach ($cr in $node.ChildReferences) {
-                if ($loadedNodes.ContainsKey($cr) -and $cr -notin $rootTree.HotPath) {
-                    $child = $loadedNodes[$cr]
+                if ($loadedNodes.ContainsKey([string]$cr) -and [string]$cr -notin ($rootTree.HotPath | ForEach-Object { [string]$_ })) {
+                    $child = $loadedNodes[[string]$cr]
                     $cpct = [math]::Round(($child.Values.Metric / $rootTree.WallClockMSec) * 100, 1)
                     Write-Host "  [$cr] $($child.Values.Metric)ms ($cpct%) - $($child.Meta.Label)"
                 }
@@ -202,3 +228,14 @@ Write-Host "`nTotal loaded nodes: $($loadedNodes.Count)"
 - Token is acquired once at the start. For traces that take >60 minutes to analyze, the token may expire — the polling loop handles 401 by refreshing.
 - Child node expansion runs up to 10 rounds. Most traces complete in 2–3 rounds.
 - The output shows hot path nodes with percentages relative to wall clock time. Percentages >100% indicate parallel execution (expected for multi-threaded workloads).
+
+## User communication
+
+The hot path pipeline involves multiple steps that can take 1–2 minutes or longer for large traces:
+
+1. **Triggering analysis** — usually instant, but may take a few seconds
+2. **Polling for completion** — up to 90 seconds (45 polls × 2s) for fresh analyses
+3. **Fetching root tree** — usually under 5 seconds
+4. **Expanding child nodes** — varies, typically 3–8 rounds of API calls
+
+Before running this pipeline, inform the user that the hot path fetch is a multi-step process and may take a minute or two. Provide periodic status updates (the script's `Write-Host` output serves this purpose) so the user knows the process hasn't stalled. If the analysis is already cached (302 on trigger), the entire pipeline completes in seconds.
