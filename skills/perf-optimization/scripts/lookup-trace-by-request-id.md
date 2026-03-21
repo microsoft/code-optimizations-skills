@@ -4,7 +4,7 @@ After [query-slow-requests.md](query-slow-requests.md) identifies slow requests 
 
 ## Script
 
-> **Important — read [az CLI query pitfalls](../../shared/az-cli-query-pitfalls.md) before modifying this script.** The `--offset` parameter, `--output json`, and single-line KQL are all required for correct results.
+> ⚠️ Read [az CLI query pitfalls](../../shared/az-cli-query-pitfalls.md) before modifying this script. Key requirements: `--offset` is mandatory, use `--output json`, and flatten KQL to a single line.
 
 ```powershell
 $resourceId = "<RESOURCE_ID>"

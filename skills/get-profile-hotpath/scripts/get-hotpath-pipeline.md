@@ -224,7 +224,7 @@ Write-Host "`nTotal loaded nodes: $($loadedNodes.Count)"
 
 ## Notes
 
-- The script uses `try-catch` for 302 redirect handling during polling, as PowerShell throws exceptions on 302 even with `-SkipHttpErrorCheck` when `-MaximumRedirection 0` is set.
+- The script uses `try-catch` for 302 redirect handling during polling, as PowerShell throws exceptions on 302 even with `-SkipHttpErrorCheck` when `-MaximumRedirection 0` is set. See [302-redirect-handling.md](../../shared/302-redirect-handling.md) for details on this pattern.
 - Token is acquired once at the start. For traces that take >60 minutes to analyze, the token may expire — the polling loop handles 401 by refreshing.
 - Child node expansion runs up to 10 rounds. Most traces complete in 2–3 rounds.
 - The output shows hot path nodes with percentages relative to wall clock time. Percentages >100% indicate parallel execution (expected for multi-threaded workloads).

@@ -14,23 +14,14 @@ This skill fetches the hot path call tree from an Application Insights Profiler 
 
 ## Steps
 
-### 1. Check investigation notes
+### 1–2. Check investigation notes and gather inputs
 
-Before asking the user for inputs, check whether `investigation-notes.md` exists in the working directory. If it does, read it for existing Application Insights details (especially **App ID** and **Resource ID**). See [Investigation Notes](../shared/investigation-notes.md) for the file format and rules.
+Follow the [Standard Skill Preamble](../shared/standard-skill-preamble.md) to check for existing investigation context and gather inputs.
 
-- If an **App ID** is found, present it to the user and ask whether to reuse it or provide a different one.
-- If only a **Resource ID** is found (no App ID), resolve the App ID by running the script in [resolve-app-id.md](../shared/resolve-app-id.md), then confirm with the user.
-- If the user confirms, skip asking for the App ID in the next step.
-
-### 2. Gather inputs
-
-Ask the user for any values not already obtained from the investigation notes:
-- **App ID**: The Application Insights app ID (GUID). If the user provides a resource ID instead, resolve it by running the script in [resolve-app-id.md](../shared/resolve-app-id.md).
-- **Trace location ID**: The full `ServiceProfilerContent` string, which looks like: `v1|{stampId}|{dataCube}|{machineName}|{processId}|{sessionId}|{activityPath}|{startTime}|{endTime}`
+In addition to the standard App ID, this skill requires:
+- **Trace location ID**: The full `ServiceProfilerContent` string. See [trace-location-id-format.md](../shared/trace-location-id-format.md) for the format specification.
 
 If the user doesn't have a trace location ID, help them find one by querying profiler samples — see [find-profiler-traces.md](scripts/find-profiler-traces.md).
-
-After all inputs are confirmed, **write or update `investigation-notes.md`** with the App ID and any other resolved values (Resource ID, Subscription ID, Resource Group). See [Investigation Notes](../shared/investigation-notes.md).
 
 ### 3–8. Fetch the hot path (combined pipeline)
 
@@ -45,9 +36,7 @@ If you need finer control or want to debug individual steps, the granular script
 
 ### 3. Acquire an access token
 
-Run the script in [get-access-token.md](../shared/get-access-token.md) to acquire a Bearer token for the profiler dataplane.
-
-> **Important — token freshness:** The `$token` variable only exists in the PowerShell session where it was set. If you run subsequent API calls in a different session (or if the variable is lost), you'll get `401 Unauthorized`. **Re-acquire the token in the same command block as each API call** to ensure it's always available. The token itself lasts ~85 minutes, but session-scoping is the more common cause of 401 errors. This is especially critical during the polling loop in step 6, which may run for over a minute.
+Run the script in [get-access-token.md](../shared/get-access-token.md) to acquire a Bearer token for the profiler dataplane. See the **token freshness and session scoping** guidance in that document — re-acquire the token in the same command block as each API call. This is especially critical during the polling loop in step 6, which may run for over a minute.
 
 ### 4. Fetch the Redis cache region
 

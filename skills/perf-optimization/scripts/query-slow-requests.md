@@ -28,7 +28,7 @@ requests
 
 ## Script
 
-> **Important — read [az CLI query pitfalls](../../shared/az-cli-query-pitfalls.md) before modifying this script.** The `--offset` parameter and `--output json` are both required for correct results.
+> ⚠️ Read [az CLI query pitfalls](../../shared/az-cli-query-pitfalls.md) before modifying this script. Key requirements: `--offset` is mandatory, use `--output json`, and flatten KQL to a single line.
 
 ```powershell
 $resourceId = "<RESOURCE_ID>"

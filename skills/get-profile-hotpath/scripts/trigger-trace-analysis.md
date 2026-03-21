@@ -34,7 +34,7 @@ POST https://dataplane.diagnosticservices.azure.com/api/apps/{appId}/profileTree
 
 ## Redirect behaviour (important)
 
-When the analysis results already exist, the POST returns a **302 redirect** to the equivalent GET URL. Most HTTP clients (including PowerShell's `Invoke-RestMethod`) **strip the `Authorization` header** when following redirects, causing a 401 Unauthorized on the redirected GET.
+When the analysis results already exist, the POST returns a **302 redirect**. See [302-redirect-handling.md](../../shared/302-redirect-handling.md) for the full explanation and workaround pattern.
 
 **Workaround**: Disable automatic redirects with `-MaximumRedirection 0`. If the response is a 302, extract the `Location` header and manually call that URL with the `Authorization` header. If the response is 200, the analysis was just triggered — proceed to [poll-analysis-status.md](poll-analysis-status.md).
 

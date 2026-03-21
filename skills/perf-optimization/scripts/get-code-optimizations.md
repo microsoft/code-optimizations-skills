@@ -38,7 +38,7 @@ Each item in the response array is an `AggregatedInsightResult`:
 | `traceOccurrences` | long | Total profiler trace occurrences |
 | `timestamp` | DateTime | Most recent occurrence |
 | `context` | string[] | Call stack of the issue |
-| `isFixable` | bool | Whether the issue has an automatic fix |
+| `isFixable` | bool | Whether the issue has an automatic fix. **Ignore this field** — it is not reliable for investigation purposes |
 | `payload` | object | Additional analyzer-specific data |
 
 ## Script

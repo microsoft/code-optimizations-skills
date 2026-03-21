@@ -29,11 +29,7 @@ The artifact ID is `a075ba6a3c054da895662a9c05def54a` (5th pipe-delimited field,
 
 ### Trace location ID from `ServiceProfilerContent`
 
-The `ServiceProfilerContent` field contains a **full v1 trace location ID** (9 pipe-delimited fields) that includes the activity:
-
-```
-v1|{stampId}|{appId}|{machineName}|{processId}|{etlFileSessionId}|{activityId}|{activityStartTime}|{activityStopTime}
-```
+The `ServiceProfilerContent` field contains a **full v1 trace location ID** (9 pipe-delimited fields) that includes the activity. See [trace-location-id-format.md](../../shared/trace-location-id-format.md) for the full format specification, field descriptions, and examples.
 
 Example:
 
@@ -43,7 +39,7 @@ v1|westus2-ey2ahqc2dsyvq|d40e2d66-4e93-47c2-881e-71a758e09f54|8666f5e97d3e|1874|
 
 The API accepts both the full 9-field format and the 6-field prefix format. Pass the full string as-is from `ServiceProfilerContent` — there is no need to truncate it.
 
-See [download-trace-by-location.md](download-trace-by-location.md) for full format details and download instructions.
+See [download-trace-by-location.md](download-trace-by-location.md) for download instructions.
 
 ## KQL query
 
@@ -65,9 +61,7 @@ To match a specific trace from the listing, add filters:
 
 ## PowerShell script
 
-> **Important — `az monitor app-insights query` quirks:**
-> - **Always pass `--offset`** matching your desired time range (e.g., `--offset P7D`). The CLI defaults to a 1-hour window that **overrides** any `ago()` or `between` in the KQL. Without this, queries will return incomplete or empty results.
-> - **Use single-line KQL.** Multi-line here-strings (`@"..."@`) are silently truncated by `az`, causing operators like `project` and `extend` to be dropped.
+> ⚠️ Read [az CLI query pitfalls](../../shared/az-cli-query-pitfalls.md) before modifying this script. Key requirements: `--offset` is mandatory, use `--output json`, and flatten KQL to a single line.
 
 ```powershell
 $appId = "<APP_ID>"

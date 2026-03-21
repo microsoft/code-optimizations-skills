@@ -26,7 +26,7 @@ GET https://dataplane.diagnosticservices.azure.com/api/apps/{appId}/profileTreeC
 
 ## Redirect behaviour (important)
 
-When the analysis completes, the status endpoint may return a **302 redirect** to the profile tree result. PowerShell's `Invoke-RestMethod` automatically follows redirects but **strips the `Authorization` header**, causing a `401 Unauthorized` on the redirected URL. This is the same pattern described in [trigger-trace-analysis.md](trigger-trace-analysis.md).
+When the analysis completes, the status endpoint may return a **302 redirect** to the profile tree result. See [302-redirect-handling.md](../../shared/302-redirect-handling.md) for the full explanation and workaround pattern.
 
 **Workaround**: Use `Invoke-WebRequest` with `-MaximumRedirection 0` and `-SkipHttpErrorCheck`. If the response is a 302, the analysis is complete — proceed directly to step 7 (fetch the root profile tree). Do not attempt to follow the redirect from the status endpoint.
 

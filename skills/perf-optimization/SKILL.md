@@ -7,7 +7,7 @@ description: Guide for analyzing performance issues based on profiler and code o
 
 When asked to analyze performance issues based on profiler data, follow these steps:
 
-1. **Check investigation notes** — Check whether `investigation-notes.md` exists in the working directory. If it does, read it for existing Application Insights resource details (resource ID, app ID, subscription, resource group). Present any found values to the user and ask whether to reuse them or provide new ones. See [Investigation Notes](../shared/investigation-notes.md) for the file format and rules.
+1. **Check investigation notes and gather inputs** — Follow the [Standard Skill Preamble](../shared/standard-skill-preamble.md) to check for existing investigation context and gather inputs.
 
 2. **Identify the Application Insights resource** — If the investigation notes didn't have the resource or the user wants a different one, follow the steps in [Identify Application Insights Resource](references/identify-appinsights-resource.md). After the resource is confirmed, **write or update `investigation-notes.md`** with the confirmed values. If only a resource ID is available, resolve the app ID using [resolve-app-id.md](../shared/resolve-app-id.md).
 

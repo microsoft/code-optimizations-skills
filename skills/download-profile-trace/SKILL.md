@@ -14,28 +14,17 @@ This skill downloads a raw profiler trace artifact from the Application Insights
 
 ## Steps
 
-### 1. Check investigation notes
+### 1–2. Check investigation notes and gather inputs
 
-Before asking the user for inputs, check whether `investigation-notes.md` exists in the working directory. If it does, read it for existing Application Insights details (especially **App ID** and **Resource ID**). See [Investigation Notes](../shared/investigation-notes.md) for the file format and rules.
+Follow the [Standard Skill Preamble](../shared/standard-skill-preamble.md) to check for existing investigation context and gather inputs.
 
-- If an **App ID** is found, present it to the user and ask whether to reuse it or provide a different one.
-- If only a **Resource ID** is found (no App ID), resolve the App ID by running the script in [resolve-app-id.md](../shared/resolve-app-id.md), then confirm with the user.
-- If the user confirms, skip asking for the App ID in the next step.
-
-### 2. Gather inputs
-
-Ask the user for any values not already obtained from the investigation notes:
-- **App ID**: The Application Insights app ID (GUID). If the user provides a resource ID instead, resolve it by running the script in [resolve-app-id.md](../shared/resolve-app-id.md).
+In addition to the standard App ID, this skill requires:
 - **Time range** (optional): How far back to look for traces. Defaults to 7 days (`P7D`).
 - **Output path** (optional): Where to save the downloaded file. Defaults to the current directory.
 
-After all inputs are confirmed, **write or update `investigation-notes.md`** with the App ID and any other resolved values (Resource ID, Subscription ID, Resource Group). See [Investigation Notes](../shared/investigation-notes.md).
-
 ### 3. Acquire an access token
 
-Run the script in [get-access-token.md](../shared/get-access-token.md) to acquire a Bearer token for the profiler dataplane.
-
-> **Important — token freshness:** The `$token` variable only exists in the PowerShell session where it was set. If you run subsequent API calls in a different session (or if the variable is lost), you'll get `401 Unauthorized`. **Re-acquire the token in the same command block as each API call** to ensure it's always available. The token itself lasts ~85 minutes, but session-scoping is the more common cause of 401 errors.
+Run the script in [get-access-token.md](../shared/get-access-token.md) to acquire a Bearer token for the profiler dataplane. See the **token freshness and session scoping** guidance in that document — re-acquire the token in the same command block as each API call.
 
 ### 4. List available profile traces
 

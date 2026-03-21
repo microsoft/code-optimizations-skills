@@ -10,44 +10,9 @@ Use this method when:
 
 ## Trace location ID format
 
-The trace location ID is a pipe-delimited v1 string. The API accepts two forms:
+The trace location ID is a pipe-delimited v1 string. See [trace-location-id-format.md](../../shared/trace-location-id-format.md) for the full format specification, field descriptions, and examples.
 
-### Prefix form (6 fields) — for downloading a full trace session
-
-```
-v1|{stampId}|{appId}|{machineName}|{processId}|{etlFileSessionId}
-```
-
-### Full form (9 fields) — for a specific activity within a trace session
-
-```
-v1|{stampId}|{appId}|{machineName}|{processId}|{etlFileSessionId}|{activityId}|{activityStartTime}|{activityStopTime}
-```
-
-| Part | Description |
-|---|---|
-| `v1` | Version identifier (always `v1` for this format) |
-| `stampId` | The stamp/deployment identifier for the Application Insights backend |
-| `appId` | The Application Insights app ID (GUID, lowercase with hyphens) |
-| `machineName` | The machine or container instance name (maps to `roleInstance` from the trace listing) |
-| `processId` | The process ID (integer, must be non-zero; use `1` if unknown) |
-| `etlFileSessionId` | The profiling session start time in UTC (ISO 8601 format, maps to `triggerTime` from the trace listing) |
-| `activityId` | *(optional)* The activity path within the trace (e.g., `/#1874/1/189/`) |
-| `activityStartTime` | *(optional)* Activity start time in UTC (ISO 8601) |
-| `activityStopTime` | *(optional)* Activity stop time in UTC (ISO 8601) |
-
-When the trace location ID comes from `ServiceProfilerContent` in the resolve step, it is typically the full 9-field form. Pass it as-is — there is no need to truncate it.
-
-### Examples
-
-Prefix form:
-```
-v1|westus2-ey2ahqc2dsyvq|d40e2d66-4e93-47c2-881e-71a758e09f54|8666f5e97d3e|1|2026-03-20T21:41:35.8314098Z
-```
-
-Full form (from `ServiceProfilerContent`):
-```
-v1|westus2-ey2ahqc2dsyvq|d40e2d66-4e93-47c2-881e-71a758e09f54|8666f5e97d3e|1874|2026-03-20T21:55:35.9066175Z|/#1874/1/189/|2026-03-20T21:55:36.0751543Z|2026-03-20T21:55:39.0792972Z
+The API accepts both the 6-field prefix form (for downloading a full trace session) and the 9-field full form (for a specific activity). When the trace location ID comes from `ServiceProfilerContent` in the resolve step, it is typically the full 9-field form. Pass it as-is — there is no need to truncate it.
 ```
 
 ## Request

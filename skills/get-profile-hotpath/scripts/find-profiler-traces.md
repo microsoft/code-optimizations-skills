@@ -4,9 +4,7 @@ If the user doesn't have a specific trace location ID, query the Application Ins
 
 This requires the Application Insights **resource ID** (not the app ID). Use the `az monitor app-insights query` command:
 
-> **Important — `--offset` is required:** The `az monitor app-insights query` CLI defaults to a 1-hour window that **overrides** any `ago()` or time-based filters in the KQL query. Always pass `--offset` matching your desired lookback period (e.g., `P7D` for 7 days, `P1D` for 1 day). Without this parameter, queries for traces older than 1 hour will silently return empty results.
-
-> **Important — read [az CLI query pitfalls](../../shared/az-cli-query-pitfalls.md) before modifying this script.** The `--offset` parameter, `--output json`, and single-line KQL are all required for correct results.
+> ⚠️ Read [az CLI query pitfalls](../../shared/az-cli-query-pitfalls.md) before modifying this script. Key requirements: `--offset` is mandatory, use `--output json`, and flatten KQL to a single line.
 
 ## Basic query (traces with correlated request operations)
 
@@ -72,17 +70,9 @@ Replace `<requestStartTime>` and `<requestEndTime>` with values extracted from t
 
 ## ServiceProfilerContent format
 
-Each result contains a `customDimensions` JSON string with a `ServiceProfilerContent` field. That value is the **trace location ID**.
+Each result contains a `customDimensions` JSON string with a `ServiceProfilerContent` field. That value is the **trace location ID**. See [trace-location-id-format.md](../../shared/trace-location-id-format.md) for the full format specification and field descriptions.
 
-Example `ServiceProfilerContent` value:
-
-```
-v1|westus2-ey2ahqc2dsyvq|a1163c00-895c-42ee-9c55-4c527742f747|weatherapp-6f5766589f-dkxzk|1|2026-03-18T21:00:39.1061639Z|/#1/1/61035/|2026-03-18T21:00:43.1159071Z|2026-03-18T21:00:43.1310982Z
-```
-
-The format is: `v1|{stampId}|{dataCube}|{machineName}|{processId}|{sessionId}|{activityPath}|{requestStartTime}|{requestEndTime}`
-
-The last two pipe-separated segments before the final segment are the request start and end times (for both v1 and v2 formats). Use `partCount - 2` and `partCount - 1` indexing to extract them reliably.
+The last two pipe-separated segments are the request start and end times. Use `partCount - 2` and `partCount - 1` indexing to extract them reliably.
 
 ## Selecting the right trace
 
