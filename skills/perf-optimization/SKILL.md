@@ -17,19 +17,28 @@ When asked to analyze performance issues based on profiler data, follow these st
 
    > **⚠️ CLI query pitfalls**: The `az monitor app-insights query` CLI has known issues that cause silent failures. Before running or modifying the query script, read [az CLI query pitfalls](../shared/az-cli-query-pitfalls.md). Key points: (1) `--offset` is **mandatory** — without it the CLI applies a 1-hour server-side filter that overrides KQL `ago()`, (2) always use `--output json` — `--output table` silently drops results for join queries, (3) flatten KQL to a single line to avoid here-string truncation.
 
-4. **Query Code Optimizations data** — Run the script in [get-code-optimizations.md](scripts/get-code-optimizations.md) to fetch AI-powered recommendations from the profiler dataplane API. This is cheap and fast — it often points directly to the right methods without needing deeper analysis.
+4. **Present findings and let the user choose** — After collecting slow request results from step 3, present the findings to the user with investigation recommendations. Do not proceed automatically — let the user decide which request(s) to investigate.
+
+   **How to present the results:**
+   - Summarize the slow requests in a clear, ranked list.
+   - For the top candidates (typically 2–3), provide a short rationale explaining **why** each is worth investigating. Consider factors such as:
+     - **Duration** — the slowest requests are often the highest-impact targets.
+     - **Frequency** — an operation that appears multiple times suggests a systemic issue rather than a one-off spike.
+     - **Error codes** — non-200 status codes combined with high latency may indicate a different class of problem (e.g., retries, timeouts).
+     - **Operation name** — if a known critical endpoint appears, call that out.
+   - Explicitly recommend which request(s) you would investigate first, and why.
+   - Ask the user which request(s) they would like to proceed with.
+
+   > **Why ask the user**: The user may have domain context you don't — they may know that a particular endpoint is low-priority, or that a specific operation is already being worked on. Letting them choose avoids wasting time on the wrong target.
+
+   > **If only one result**: If the query returned a single slow request, still present it with context and confirm with the user before proceeding.
+
+5. **Query Code Optimizations data** — Run the script in [get-code-optimizations.md](scripts/get-code-optimizations.md) to fetch AI-powered recommendations from the profiler dataplane API. This is cheap and fast — it often points directly to the right methods without needing deeper analysis.
 
    > **If no recommendations are found**: This may happen when the Application Insights Profiler hasn't collected enough data, or the profiler isn't actively running. Try these fallback steps:
    > 1. **Widen the time range** — increase `$startTime` to cover the last 7 or 30 days instead of 24 hours.
    > 2. **Verify the profiler is active** — check that Application Insights Profiler is enabled and has recent profiling sessions. If step 3 returned no results either, the profiler may not be enabled.
    > 3. **Fall back to manual trace analysis** — skip to step 6 and invoke the `get-profile-hotpath` skill directly. Use the slow request IDs from step 3 (if available) to analyze the most expensive operations without Code Optimization guidance.
-
-5. **Get recommendation details** — For the most impactful recommendations from step 4, extract the `key` and `timestamp` fields from each rollups result. Then run [get-recommendation-detail.md](scripts/get-recommendation-detail.md) with those values to get AI-generated fix guidance. **Important**: the rollups response variables won't persist across PowerShell sessions — extract the values you need before running the next script, or combine both calls in a single script block.
-
-   > **If the recommendation service is unavailable**: The API may return `ServiceUnavailable` (HTTP 503) when the recommendation engine has failed after retries. This is a transient condition. When this happens:
-   > 1. **Do not treat it as a blocking error** — the rollups data from step 4 is still valid and actionable.
-   > 2. **Proceed with manual analysis** — use the `issueCategory`, `function`, `symbol`, `context` (call stack), and `value`/`criteria` fields from the rollups response to understand the bottleneck.
-   > 3. **Fetch the hot path** — invoke the `get-profile-hotpath` skill (step 6) to get method-level detail, then combine with the rollups data to form your own recommendation.
 
 6. **Fetch profiler hot path for targeted operations** — Once you've identified the most impactful operations from steps 3–5, use the `get-profile-hotpath` skill to retrieve the call tree and hot path for specific traces. This is an expensive operation — only invoke it for operations that warrant deep investigation. See [Leveraging Profiler Hot Path Data](#leveraging-profiler-hot-path-data) for details.
 
@@ -63,7 +72,7 @@ The `get-profile-hotpath` skill returns a call tree with timing data. Use it as 
 
 1. **Identify the dominant method**: The hot path highlights the most expensive execution path. Focus optimization efforts on the methods consuming the most inclusive time (highest `Values.Metric`).
 2. **Classify the bottleneck type**: Check `TotalCpuTime`, `TotalAwaitTime`, and `TotalBlockedTime` from the root tree to determine if the issue is CPU-bound, I/O-bound, or contention-bound.
-3. **Match with Code Optimization recommendations**: Cross-reference the hot path methods with the recommendations from [get-code-optimizations.md](scripts/get-code-optimizations.md) and detail from [get-recommendation-detail.md](scripts/get-recommendation-detail.md) for prioritized, data-backed fixes.
+3. **Match with Code Optimization recommendations**: Cross-reference the hot path methods with the recommendations from [get-code-optimizations.md](scripts/get-code-optimizations.md) for prioritized, data-backed fixes.
 4. **Target code changes**: If source code is available, navigate to the methods identified in the hot path and apply targeted optimizations.
 
 > **Note on log queries**: If you need to query Application Insights logs (requests, dependencies, performanceCounters tables) for additional context beyond what [query-slow-requests.md](scripts/query-slow-requests.md) provides, use the Azure portal, Azure CLI (`az monitor app-insights query`), or the Azure Monitor REST API directly. This skill focuses on profiler-based analysis via the dataplane API.
@@ -75,9 +84,9 @@ The `get-profile-hotpath` skill returns a call tree with timing data. Use it as 
 2. If found, confirm with user; if not, identify and write to investigation notes
 3. Resolve app ID from resource ID if needed
 4. Query for slow requests with profiler traces (query-slow-requests.md)
-5. Run get-code-optimizations.md to fetch Code Optimization recommendations
-6. Run get-recommendation-detail.md for the top recommendations to get AI fix guidance
-7. Identify the top operations worth deep-diving (from steps 4–6)
+5. Present ranked results with rationales; ask user which request(s) to investigate
+6. Run get-code-optimizations.md to fetch Code Optimization recommendations
+7. Identify the top operations worth deep-diving (from steps 5–6)
 8. Invoke get-profile-hotpath skill with the app ID and trace location ID
 9. Receive hot path call tree (e.g., WeatherForecastController.Get → 70% in ToList lambda)
 10. Combine hot path + recommendations into prioritized action plan
