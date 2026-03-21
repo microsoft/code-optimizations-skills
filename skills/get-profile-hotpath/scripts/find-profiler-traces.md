@@ -6,36 +6,27 @@ This requires the Application Insights **resource ID** (not the app ID). Use the
 
 > **Important — `--offset` is required:** The `az monitor app-insights query` CLI defaults to a 1-hour window that **overrides** any `ago()` or time-based filters in the KQL query. Always pass `--offset` matching your desired lookback period (e.g., `P7D` for 7 days, `P1D` for 1 day). Without this parameter, queries for traces older than 1 hour will silently return empty results.
 
+> **Important — read [az CLI query pitfalls](../../shared/az-cli-query-pitfalls.md) before modifying this script.** The `--offset` parameter, `--output json`, and single-line KQL are all required for correct results.
+
 ## Basic query (traces with correlated request operations)
 
 ```powershell
 # Adjust the lookback period to match the investigation window (e.g., P7D = 7 days, P1D = 1 day)
+$resourceId = "<RESOURCE_ID>"
 $timeSpan = "P7D"
 
-az monitor app-insights query \
-  --apps "<RESOURCE_ID>" \
-  --offset $timeSpan \
-  --analytics-query "
-    let traces = customEvents
-    | where name == 'ServiceProfilerSample'
-    | extend spc = tostring(customDimensions['ServiceProfilerContent'])
-    | extend parts = split(spc, '|')
-    | extend partCount = array_length(parts)
-    | extend requestStartTime = todatetime(parts[partCount - 2])
-    | extend requestEndTime = todatetime(parts[partCount - 1])
-    | extend traceDurationMs = datetime_diff('millisecond', requestEndTime, requestStartTime)
-    | extend machineName = tostring(parts[3])
-    | extend activityPath = tostring(parts[partCount - 3])
-    | project timestamp, spc, requestStartTime, requestEndTime, traceDurationMs, machineName, activityPath;
-    traces
-    | join kind=leftouter (
-        requests
-        | project reqTimestamp = timestamp, operationName = name, reqUrl = url, reqDurationMs = duration, reqStart = timestamp, reqEnd = timestamp + totimespan(duration * 10000)
-    ) on \$left.requestStartTime >= \$right.reqStart and \$left.requestEndTime <= \$right.reqEnd
-    | project timestamp, spc, operationName, reqUrl, traceDurationMs, reqDurationMs, machineName, activityPath
-    | order by timestamp desc
-    | take 10
-  " \
+# Build the KQL query as a single line to avoid here-string truncation issues.
+# Note: $left and $right are KQL keywords, not PowerShell variables — use backtick
+# escaping (`$left, `$right) when inside double-quoted PowerShell strings.
+$query = "let traces = customEvents | where name == 'ServiceProfilerSample' | extend spc = tostring(customDimensions['ServiceProfilerContent']) | extend parts = split(spc, '|') | extend partCount = array_length(parts) | extend requestStartTime = todatetime(parts[partCount - 2]) | extend requestEndTime = todatetime(parts[partCount - 1]) | extend traceDurationMs = datetime_diff('millisecond', requestEndTime, requestStartTime) | extend machineName = tostring(parts[3]) | extend activityPath = tostring(parts[partCount - 3]) | project timestamp, spc, requestStartTime, requestEndTime, traceDurationMs, machineName, activityPath; traces | join kind=leftouter (requests | project reqTimestamp = timestamp, operationName = name, reqUrl = url, reqDurationMs = duration, reqStart = timestamp, reqEnd = timestamp + totimespan(duration * 10000)) on `$left.requestStartTime >= `$right.reqStart and `$left.requestEndTime <= `$right.reqEnd | project timestamp, spc, operationName, reqUrl, traceDurationMs, reqDurationMs, machineName, activityPath | order by timestamp desc | take 10"
+
+# --offset is MANDATORY: without it, the CLI applies a 1-hour server-side time
+# filter regardless of any KQL ago() in the query. Use ISO 8601 duration format.
+# --output json is required: --output table silently drops results for join queries.
+az monitor app-insights query `
+  --apps "$resourceId" `
+  --analytics-query "$query" `
+  --offset $timeSpan `
   --output json
 ```
 
@@ -47,25 +38,16 @@ If the join produces too many or too few results (due to timestamp precision), u
 
 ```powershell
 # Adjust the lookback period to match the investigation window (e.g., P7D = 7 days, P1D = 1 day)
+$resourceId = "<RESOURCE_ID>"
 $timeSpan = "P7D"
 
-az monitor app-insights query \
-  --apps "<RESOURCE_ID>" \
-  --offset $timeSpan \
-  --analytics-query "
-    customEvents
-    | where name == 'ServiceProfilerSample'
-    | extend spc = tostring(customDimensions['ServiceProfilerContent'])
-    | extend parts = split(spc, '|')
-    | extend partCount = array_length(parts)
-    | extend requestStartTime = todatetime(parts[partCount - 2])
-    | extend requestEndTime = todatetime(parts[partCount - 1])
-    | extend traceDurationMs = datetime_diff('millisecond', requestEndTime, requestStartTime)
-    | extend machineName = tostring(parts[3])
-    | project timestamp, spc, requestStartTime, requestEndTime, traceDurationMs, machineName
-    | order by timestamp desc
-    | take 10
-  " \
+# Single-line KQL to avoid here-string truncation issues.
+$query = "customEvents | where name == 'ServiceProfilerSample' | extend spc = tostring(customDimensions['ServiceProfilerContent']) | extend parts = split(spc, '|') | extend partCount = array_length(parts) | extend requestStartTime = todatetime(parts[partCount - 2]) | extend requestEndTime = todatetime(parts[partCount - 1]) | extend traceDurationMs = datetime_diff('millisecond', requestEndTime, requestStartTime) | extend machineName = tostring(parts[3]) | project timestamp, spc, requestStartTime, requestEndTime, traceDurationMs, machineName | order by timestamp desc | take 10"
+
+az monitor app-insights query `
+  --apps "$resourceId" `
+  --analytics-query "$query" `
+  --offset $timeSpan `
   --output json
 ```
 
@@ -73,17 +55,16 @@ az monitor app-insights query \
 
 ```powershell
 # Use the same lookback period as step 1
+$resourceId = "<RESOURCE_ID>"
 $timeSpan = "P7D"
 
-az monitor app-insights query \
-  --apps "<RESOURCE_ID>" \
-  --offset $timeSpan \
-  --analytics-query "
-    requests
-    | where timestamp >= datetime('<requestStartTime>') and timestamp <= datetime('<requestEndTime>')
-    | project timestamp, name, url, duration
-    | order by timestamp desc
-  " \
+# Replace <requestStartTime> and <requestEndTime> with values from the trace's ServiceProfilerContent.
+$query = "requests | where timestamp >= datetime('<requestStartTime>') and timestamp <= datetime('<requestEndTime>') | project timestamp, name, url, duration | order by timestamp desc"
+
+az monitor app-insights query `
+  --apps "$resourceId" `
+  --analytics-query "$query" `
+  --offset $timeSpan `
   --output json
 ```
 

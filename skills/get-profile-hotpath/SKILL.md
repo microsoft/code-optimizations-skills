@@ -36,6 +36,8 @@ After all inputs are confirmed, **write or update `investigation-notes.md`** wit
 
 For efficiency, use the combined pipeline script [get-hotpath-pipeline.md](scripts/get-hotpath-pipeline.md) which performs steps 3–8 in a single PowerShell block: token acquisition → metadata → trigger → poll → root tree → child node expansion. This is the **preferred approach** — it reduces tool calls from 5–6 down to 1–2.
 
+> **User communication**: The hot path pipeline may take **1–2 minutes** for fresh traces (triggering analysis, polling for completion, expanding child nodes). Before starting the pipeline, inform the user that this is a multi-step process and they should expect to wait. Provide periodic status updates based on the script's output (e.g., "Analysis triggered, polling for completion...", "Expanding call tree — round 3 of 10..."). If the trace was previously analyzed, cached results return in seconds.
+
 If you need finer control or want to debug individual steps, the granular scripts below remain available.
 
 <details>

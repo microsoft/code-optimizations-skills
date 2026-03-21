@@ -26,7 +26,22 @@ When asked to analyze performance issues based on profiler data, follow these st
 
 5. **Get recommendation details** — For the most impactful recommendations from step 4, extract the `key` and `timestamp` fields from each rollups result. Then run [get-recommendation-detail.md](scripts/get-recommendation-detail.md) with those values to get AI-generated fix guidance. **Important**: the rollups response variables won't persist across PowerShell sessions — extract the values you need before running the next script, or combine both calls in a single script block.
 
+   > **If the recommendation service is unavailable**: The API may return `ServiceUnavailable` (HTTP 503) when the recommendation engine has failed after retries. This is a transient condition. When this happens:
+   > 1. **Do not treat it as a blocking error** — the rollups data from step 4 is still valid and actionable.
+   > 2. **Proceed with manual analysis** — use the `issueCategory`, `function`, `symbol`, `context` (call stack), and `value`/`criteria` fields from the rollups response to understand the bottleneck.
+   > 3. **Fetch the hot path** — invoke the `get-profile-hotpath` skill (step 6) to get method-level detail, then combine with the rollups data to form your own recommendation.
+
 6. **Fetch profiler hot path for targeted operations** — Once you've identified the most impactful operations from steps 3–5, use the `get-profile-hotpath` skill to retrieve the call tree and hot path for specific traces. This is an expensive operation — only invoke it for operations that warrant deep investigation. See [Leveraging Profiler Hot Path Data](#leveraging-profiler-hot-path-data) for details.
+
+   > **Bridging request IDs to trace location IDs**: The slow requests from step 3 return request IDs, but the `get-profile-hotpath` skill requires a `ServiceProfilerContent` trace location ID. To look up trace location IDs for specific request IDs, query Application Insights `customEvents` filtering by `customDimensions.RequestId`:
+   >
+   > ```kql
+   > customEvents | where name == 'ServiceProfilerSample' | extend reqId = tostring(customDimensions['RequestId']) | where reqId in ('REQUEST_ID_1', 'REQUEST_ID_2') | project timestamp, tostring(customDimensions['ServiceProfilerContent']), reqId
+   > ```
+   >
+   > Run this using the same `az monitor app-insights query` pattern from step 3 (with `--offset` and `--output json`). The `ServiceProfilerContent` value from the results is the trace location ID needed for the hot path skill.
+
+   > **Set user expectations**: The hot path fetch involves multiple API steps (trigger analysis → poll for completion → fetch root tree → expand child nodes) and typically takes **1–2 minutes** for fresh analyses. Inform the user upfront that this will take some time. For previously analyzed traces, results are cached and return in seconds.
 
 7. **Putting data together to identify performance improvement opportunities** — Correlate the hot path bottlenecks with code optimization recommendations to prioritize fixes.
 
