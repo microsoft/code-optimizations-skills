@@ -1,5 +1,5 @@
 {
-  "name": "performance-optimization-copilot",
+  "name": "perf-copilot",
   "owner": {
     "name": "Saar Shen",
     "email": "noreply@github.com"
@@ -10,7 +10,7 @@
   },
   "plugins": [
     {
-      "name": "performance-optimization-copilot",
+      "name": "perf-copilot",
       "description": "Performance optimization skills and Azure monitoring integrations (Application Insights + Azure Monitor)",
       "version": "0.1.0",
       "source": "."
