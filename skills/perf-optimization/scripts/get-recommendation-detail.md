@@ -27,6 +27,8 @@ GET https://dataplane.diagnosticservices.azure.com/api/apps/{appId}/insights/rol
 
 ## Script
 
+> **Note:** The `key` and `timestamp` values come from the rollups response returned by [get-code-optimizations.md](get-code-optimizations.md). Extract these values from the response before running this script, as PowerShell variables do not persist across separate command invocations.
+
 ```powershell
 $appId = "<APP_ID>"
 $key = "<RECOMMENDATION_KEY>"        # From the rollups response .key field
@@ -51,3 +53,19 @@ $response = Invoke-RestMethod `
 
 Write-Host $response.recommendation
 ```
+
+## Handling empty recommendations
+
+The AI recommendation may return an empty or null `recommendation` field for some insights. This can happen when:
+
+- The insight is too new and the recommendation engine hasn't generated content yet
+- The issue type doesn't have a recommendation template
+- The service is temporarily unable to generate a recommendation
+
+When the recommendation is empty:
+
+1. **Do not treat this as an error** — the insight itself (from the rollups response) is still valid and actionable.
+2. **Proceed with analysis** — use the `issueCategory`, `function`, `symbol`, `context` (call stack), and `value`/`criteria` fields from the rollups response to understand the bottleneck.
+3. **Use the hot path** — invoke the `get-profile-hotpath` skill to get method-level call tree data for the affected operation.
+4. **Inspect source code** — navigate to the method identified in the `symbol` field and look for common performance anti-patterns (inefficient algorithms, unnecessary allocations, blocking calls).
+5. **Generate your own recommendation** — based on the profiler data and source code analysis, provide a concrete optimization suggestion to the user.

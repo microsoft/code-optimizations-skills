@@ -24,6 +24,12 @@ GET https://dataplane.diagnosticservices.azure.com/api/apps/{appId}/profileTreeC
 | `Authorization` | `Bearer {token}` |
 | `x-ms-client-request-id` | A new GUID for correlation |
 
+## Redirect behaviour (important)
+
+When the analysis completes, the status endpoint may return a **302 redirect** to the profile tree result. PowerShell's `Invoke-RestMethod` automatically follows redirects but **strips the `Authorization` header**, causing a `401 Unauthorized` on the redirected URL. This is the same pattern described in [trigger-trace-analysis.md](trigger-trace-analysis.md).
+
+**Workaround**: Use `Invoke-WebRequest` with `-MaximumRedirection 0` and `-SkipHttpErrorCheck`. If the response is a 302, the analysis is complete — proceed directly to step 7 (fetch the root profile tree). Do not attempt to follow the redirect from the status endpoint.
+
 ## PowerShell script
 
 ```powershell
@@ -40,11 +46,40 @@ $headers = @{
     "x-ms-client-request-id" = $correlationId
 }
 
-$maxAttempts = 30
+# Increase maxAttempts for large traces if needed (45 × 2s ≈ 90 seconds)
+$maxAttempts = 45
 $delaySeconds = 2
 
 for ($i = 1; $i -le $maxAttempts; $i++) {
-    $status = Invoke-RestMethod -Uri $statusUri -Method GET -Headers $headers
+    # Use Invoke-WebRequest with -MaximumRedirection 0 to prevent auto-following
+    # 302 redirects, which would strip the Authorization header and cause 401 errors.
+    $response = Invoke-WebRequest -Uri $statusUri -Method GET -Headers $headers `
+        -MaximumRedirection 0 -SkipHttpErrorCheck
+
+    if ($response.StatusCode -eq 302) {
+        # 302 means the analysis is complete — the redirect points to the result.
+        # Do NOT follow it here; proceed to step 7 to fetch the profile tree via GET.
+        Write-Host "Poll $i — 302 redirect received. Trace analysis is complete."
+        break
+    }
+
+    if ($response.StatusCode -eq 401) {
+        Write-Host "Poll $i — 401 Unauthorized, refreshing token..."
+        $token = az account get-access-token `
+            --resource "api://dataplane.diagnosticservices.azure.com" `
+            --query accessToken -o tsv
+        $headers["Authorization"] = "Bearer $token"
+        Start-Sleep -Seconds $delaySeconds
+        continue
+    }
+
+    if ($response.StatusCode -ne 200) {
+        Write-Error "Poll $i — Unexpected status code: $($response.StatusCode)"
+        Start-Sleep -Seconds $delaySeconds
+        continue
+    }
+
+    $status = $response.Content | ConvertFrom-Json
     Write-Host "Poll $i — Status: $($status.status)"
 
     if ($status.status -eq "Complete") {
@@ -65,8 +100,13 @@ if ($i -gt $maxAttempts) {
 }
 ```
 
+> **Why `-MaximumRedirection 0`?** When the analysis finishes, the status endpoint returns a 302 redirect to the profile tree result. PowerShell's default behaviour follows the redirect automatically but strips the `Authorization` header, resulting in a 401. Disabling auto-redirect lets us detect the 302 as a "complete" signal and fetch the tree properly in the next step (with the auth header preserved).
+
 ## Behaviour
 
-- Poll every 2 seconds, up to 30 attempts (roughly 60 seconds).
-- The `status` field in the response indicates progress. Stop polling when it returns `Complete` or `Failed`.
-- Once complete, proceed to fetch the root profile tree.
+- Poll every 2 seconds, up to 45 attempts (roughly 90 seconds). Increase `$maxAttempts` for larger traces.
+- A **302** response means the analysis is complete — proceed to step 7 to fetch the profile tree.
+- A **200** response with `status: "Complete"` also means the analysis is done.
+- A **200** response with `status: "Failed"` means the analysis failed — try a different trace.
+- A **401** response triggers an automatic token refresh and retry.
+- Once complete (via 302 or status), proceed to fetch the root profile tree.

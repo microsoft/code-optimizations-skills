@@ -36,6 +36,8 @@ After all inputs are confirmed, **write or update `investigation-notes.md`** wit
 
 Run the script in [get-access-token.md](scripts/get-access-token.md) to acquire a Bearer token for the profiler dataplane.
 
+> **Important — token freshness:** The `$token` variable only exists in the PowerShell session where it was set. If you run subsequent API calls in a different session (or if the variable is lost), you'll get `401 Unauthorized`. **Re-acquire the token in the same command block as each API call** to ensure it's always available. The token itself lasts ~85 minutes, but session-scoping is the more common cause of 401 errors. This is especially critical during the polling loop in step 6, which may run for over a minute.
+
 ### 4. Fetch the Redis cache region
 
 Run the script in [get-metadata.md](scripts/get-metadata.md) to call the `profileTreeMetadata` endpoint and extract the `redisCacheRegion` value.
@@ -65,3 +67,42 @@ Once all hot path nodes are loaded, present the result using the format describe
 ## Response format
 
 See [present-hotpath.md](references/present-hotpath.md) for how to interpret the profile tree JSON and display the hot path as a human-readable call tree.
+
+## Troubleshooting
+
+### 401 Unauthorized during polling (302 redirect)
+
+The most common cause of 401 errors during the polling loop (step 6) is **302 redirect auth stripping**. When the analysis completes, the status endpoint returns a 302 redirect to the profile tree result. PowerShell's `Invoke-RestMethod` automatically follows the redirect but strips the `Authorization` header, causing a 401 on the redirected URL.
+
+The updated polling script in [poll-analysis-status.md](scripts/poll-analysis-status.md) handles this by using `Invoke-WebRequest -MaximumRedirection 0` to detect the 302 as a completion signal without following it.
+
+If you still see persistent 401s after the script update:
+
+1. Verify the user is logged in: `az account show`
+2. Re-authenticate: `az login`
+3. Ensure the correct subscription is selected: `az account set --subscription <subscription-id>`
+4. Try acquiring the token manually and check for errors: `az account get-access-token --resource "api://dataplane.diagnosticservices.azure.com"`
+
+### Analysis still "Running" after polling timeout
+
+If the `profileTreeComputeStatus` endpoint still returns `Running` after the polling loop exhausts all attempts (default: 45 attempts / ~90 seconds):
+
+1. **Wait and retry** — large traces take longer to analyze. Wait 30–60 seconds, then re-acquire a fresh token and try a direct GET on the `profileTreeDefinitions` endpoint (step 7). If the analysis completed in the background, the GET will return the root tree directly.
+2. **Try a different trace** — if the trace is unusually large or corrupted, try a different profiler trace from the same time window. Shorter traces analyze faster.
+3. **Re-trigger the analysis** — POST to the `profileTreeDefinitions` endpoint again (step 5). If the analysis completed, you'll get a 302 redirect to the cached result.
+
+### Analysis returns "Failed"
+
+If the `profileTreeComputeStatus` endpoint returns `Failed`:
+
+1. **Try a different trace** — the trace data may be corrupted or incomplete.
+2. **Check the trace time window** — very old traces may have expired from storage.
+3. **Try with `showFrameworkDependencies: true`** — in rare cases, changing this parameter can resolve analysis failures.
+
+### Empty or minimal root tree
+
+If the root tree has very few nodes or the hot path is unexpectedly short:
+
+1. **Expand child nodes** — the root tree only includes 1–2 levels. Follow `ChildReferences` using [get-child-nodes.md](scripts/get-child-nodes.md) to get the full tree.
+2. **Check the trace duration** — very short traces (< 100ms) may not have enough samples for a meaningful call tree.
+3. **Try with framework dependencies** — set `showFrameworkDependencies: true` in the trigger request to include runtime frames that may reveal hidden bottlenecks.

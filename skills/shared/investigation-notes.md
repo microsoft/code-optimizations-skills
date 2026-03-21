@@ -52,6 +52,28 @@ After successfully identifying or resolving the Application Insights resource (o
 | **Resource Group** | Azure resource group name. Useful for scoped lookups. | All skills |
 | **Resource Name** | Display name of the Application Insights resource. Helps the user confirm identity. | All skills |
 
+## Parsing flexibility
+
+The investigation notes file may be written in different formats depending on who or what created it. When **reading** the file, accept both common formats:
+
+### Table format (recommended for writing)
+
+```markdown
+| Field             | Value |
+|-------------------|-------|
+| Resource ID       | `/subscriptions/.../components/my-app` |
+| App ID            | `a1b2c3d4-...` |
+```
+
+### Bullet-point format
+
+```markdown
+- **Resource ID**: /subscriptions/.../components/my-app
+- **App ID**: a1b2c3d4-...
+```
+
+When **writing** the file, use the table format from the template above. When **reading**, look for field names (Resource ID, App ID, Subscription ID, Resource Group) regardless of the surrounding markdown structure.
+
 ## Rules
 
 - **Always confirm with the user** before reusing values from the notes. The user may want to switch to a different resource.

@@ -13,7 +13,7 @@ When asked to analyze performance issues based on profiler data, follow these st
 
 3. **Query Code Optimizations data** — Run the script in [get-code-optimizations.md](scripts/get-code-optimizations.md) to fetch AI-powered recommendations from the profiler dataplane API. This is cheap and fast — it often points directly to the right methods without needing deeper analysis.
 
-4. **Get recommendation details** — For the most impactful recommendations from step 3, run [get-recommendation-detail.md](scripts/get-recommendation-detail.md) to get AI-generated fix guidance for each.
+4. **Get recommendation details** — For the most impactful recommendations from step 3, extract the `key` and `timestamp` fields from each rollups result. Then run [get-recommendation-detail.md](scripts/get-recommendation-detail.md) with those values to get AI-generated fix guidance. **Important**: the rollups response variables won't persist across PowerShell sessions — extract the values you need before running the next script, or combine both calls in a single script block.
 
 5. **Fetch profiler hot path for targeted operations** — Once you've identified the most impactful operations from steps 3–4, use the `get-profile-hotpath` skill to retrieve the call tree and hot path for specific traces. This is an expensive operation — only invoke it for operations that warrant deep investigation. See [Leveraging Profiler Hot Path Data](#leveraging-profiler-hot-path-data) for details.
 
