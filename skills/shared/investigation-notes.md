@@ -48,8 +48,8 @@ After successfully identifying or resolving the Application Insights resource (o
 |---|---|---|
 | **Resource ID** | Full ARM resource ID (`/subscriptions/.../providers/microsoft.insights/components/...`). Primary identifier for Azure Monitor queries. | `perf-optimization`, `download-profile-trace`, `get-profile-hotpath` |
 | **App ID** | Application Insights app ID (GUID). Required for profiler dataplane API calls. | `download-profile-trace`, `get-profile-hotpath` |
-| **Subscription ID** | Azure subscription GUID. Required as a parameter for MCP tool calls. | `perf-optimization` |
-| **Resource Group** | Azure resource group name. Used for scoped queries. | `perf-optimization` |
+| **Subscription ID** | Azure subscription GUID. Useful for Azure CLI commands. | All skills |
+| **Resource Group** | Azure resource group name. Useful for scoped lookups. | All skills |
 | **Resource Name** | Display name of the Application Insights resource. Helps the user confirm identity. | All skills |
 
 ## Rules

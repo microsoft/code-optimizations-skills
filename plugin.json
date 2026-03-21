@@ -17,6 +17,5 @@
     "azure-monitor"
   ],
   "skills": "skills/",
-  "agents": "agents/",
-  "mcpServers": ".mcp.json"
+  "agents": "agents/"
 }

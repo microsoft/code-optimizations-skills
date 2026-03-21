@@ -12,12 +12,6 @@ A [GitHub Copilot CLI](https://docs.github.com/en/copilot/github-copilot-in-the-
 | **get-profile-hotpath** | Fetches and displays the hot path call tree from an Application Insights Profiler trace for method-level bottleneck analysis |
 | **download-profile-trace** | Downloads raw profiler trace files (.etl, .netperf) from the Application Insights Profiler dataplane API for offline analysis in PerfView or Visual Studio |
 
-### MCP Server
-
-- **azure-perf-monitoring** — Azure MCP server scoped to:
-  - **Application Insights** — performance recommendations, request metrics, dependency analysis
-  - **Azure Monitor** — resource metrics, activity logs, Log Analytics queries
-
 ### Agent
 
 - **perf-optimizer** — A performance optimization specialist agent that combines all skills
@@ -36,8 +30,8 @@ copilot plugin install ./performance-optimization-copilot
 ## Prerequisites
 
 - [GitHub Copilot CLI](https://docs.github.com/en/copilot/github-copilot-in-the-cli) installed and authenticated
-- [Node.js](https://nodejs.org/) (for the Azure MCP server via `npx`)
-- An Azure subscription with Application Insights and/or Azure Monitor configured (for MCP tools)
+- [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) installed and logged in (`az login`)
+- An Azure subscription with Application Insights Profiler configured
 
 ## Usage
 
@@ -58,7 +52,6 @@ copilot "Download a profiler trace from my App Insights resource"
 
 ```
 ├── plugin.json                                  # Plugin manifest
-├── .mcp.json                                    # Azure MCP server configuration
 ├── skills/
 │   ├── perf-optimization/SKILL.md               # Performance analysis & optimization skill
 │   ├── get-profile-hotpath/SKILL.md             # Profiler hot path call tree skill
