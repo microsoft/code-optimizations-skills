@@ -24,7 +24,7 @@ Most commands share these options:
 | Access Token | | `--access` | Yes | Bearer access token |
 | Start Time | | `--start-time` | No | Start datetime in UTC (ISO 8601) |
 | End Time | | `--end-time` | No | End datetime in UTC (ISO 8601) |
-| Output Format | `-o` | `--output` | No | `json` (default) or `compact` |
+| Output Format | `-o` | `--output` | No | `json` (default), `compact`, or `summary` |
 
 ## Available Commands
 

@@ -4,16 +4,16 @@ Executes the `aira.exe analyze` command to perform anomaly detection, trend anal
 
 ## Parameters
 
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `subscriptionId` | Yes | Azure subscription ID (GUID) |
-| `resourceGroup` | Yes | Azure resource group name |
-| `componentName` | Yes | Application Insights component name |
-| `agentName` | No | Filter by agent name |
-| `agentVersion` | No | Filter by agent version |
-| `limit` | No | Maximum number of records to analyze (1–50,000) |
-| `startTime` | No | Start datetime in UTC (ISO 8601) |
-| `endTime` | No | End datetime in UTC (ISO 8601) |
+| Parameter | Required | Default | Description |
+|-----------|----------|---------|-------------|
+| `subscriptionId` | Yes | — | Azure subscription ID (GUID) |
+| `resourceGroup` | Yes | — | Azure resource group name |
+| `componentName` | Yes | — | Application Insights component name |
+| `agentName` | No | all agents | Filter by agent name |
+| `agentVersion` | No | all versions | Filter by agent version |
+| `limit` | No | 1000 | Maximum number of records to analyze (1–50,000) |
+| `startTime` | No | 24 hours ago | Start datetime in UTC (ISO 8601) |
+| `endTime` | No | now | End datetime in UTC (ISO 8601) |
 
 ## Script
 
@@ -25,8 +25,8 @@ $componentName = "<COMPONENT_NAME>"
 # Optional filters — set to $null or remove the corresponding parameter lines below if not needed
 $agentName = $null      # e.g., "my-agent"
 $agentVersion = $null   # e.g., "1.0.0"
-$limit = $null          # e.g., 1000
-$startTime = $null      # e.g., "2026-03-01T00:00:00Z"
+$limit = 1000           # Default 1000. Increase for thorough analysis, decrease for faster results.
+$startTime = (Get-Date).ToUniversalTime().AddHours(-24).ToString("yyyy-MM-ddTHH:mm:ssZ")  # Last 24 hours
 $endTime = $null        # e.g., "2026-03-24T00:00:00Z"
 
 # Acquire access token for Application Insights data-plane API.
@@ -42,32 +42,33 @@ if (-not $token) {
 $scriptDir = "$PSScriptRoot"
 $exePath = Join-Path $scriptDir "aira.exe"
 
-$args = @(
+$cmdArgs = @(
   "analyze"
   "-s", $subscriptionId
   "-g", $resourceGroup
   "-c", $componentName
   "--access", $token
+  "-o", "summary"
 )
 
 if ($agentName) {
-  $args += "--agent-name", $agentName
+  $cmdArgs += "--agent-name", $agentName
 }
 
 if ($agentVersion) {
-  $args += "--agent-version", $agentVersion
+  $cmdArgs += "--agent-version", $agentVersion
 }
 
 if ($limit) {
-  $args += "--limit", $limit
+  $cmdArgs += "--limit", $limit
 }
 
 if ($startTime) {
-  $args += "--start-time", $startTime
+  $cmdArgs += "--start-time", $startTime
 }
 
 if ($endTime) {
-  $args += "--end-time", $endTime
+  $cmdArgs += "--end-time", $endTime
 }
 
 # Run the analysis
@@ -82,7 +83,7 @@ if ($startTime) { Write-Host "  Start Time: $startTime" }
 if ($endTime) { Write-Host "  End Time: $endTime" }
 Write-Host ""
 
-$result = & $exePath @args 2>&1
+$result = & $exePath @cmdArgs 2>&1
 
 $exitCode = $LASTEXITCODE
 
@@ -90,7 +91,7 @@ if ($exitCode -ne 0) {
   Write-Host "ERROR: aira.exe exited with code $exitCode"
   Write-Host $result
 } else {
-  # Output the JSON result for the agent to interpret
+  # Output the summary result for the agent to interpret
   $result
 }
 ```
@@ -99,30 +100,26 @@ if ($exitCode -ne 0) {
 
 | Code | Meaning |
 |------|---------|
-| 0 | Success — results are returned as JSON |
-| 1 | Validation or argument error — check the error message for missing or invalid parameters |
+| 0 | Success — results are returned (summary text or JSON depending on `-o` flag) |
+| 1 | Validation error or no data found — check stderr for details and actionable guidance |
 | 2 | Unexpected error — the CLI encountered an internal failure |
 
 ### Reading the results
 
-The `analyze` command returns JSON output (pretty-printed by default). The response contains analysis results including:
+With `-o summary` (default in this script), the CLI returns a pre-formatted text summary containing:
 
-- **Anomaly detection** — Identifies unusual patterns in agent telemetry (latency spikes, error rate changes, throughput drops)
-- **Trend analysis** — Shows performance trends over the analysis window
-- **Performance statistics** — Aggregated metrics for the analyzed agent telemetry
+- **Agent performance table** — All agents sorted by P95 duration, with call counts, latency stats, anomaly counts, and average token usage
+- **Anomalies** — High-severity spikes (severity ≥ 3.0) with operation context, model, and operation ID for drill-down
+- **Trends** — Notable trends (confidence ≥ 0.5) showing metric direction and change rate
 
-Parse the JSON output to extract key findings. Focus on:
-
-1. Anomalies with high severity or impact
-2. Performance degradation trends
-3. Agents or versions with outlier metrics
+Present this summary directly to the user. For raw JSON data (e.g., for follow-up queries), re-run with `-o json`.
 
 ### No results?
 
-If the command returns empty results or an error:
+If the command returns exit code 1 with "No telemetry records found":
 
 - **Check credentials** — Ensure `az login` was run and the account has access to the Application Insights resource
 - **Verify resource details** — Confirm the subscription ID, resource group, and component name are correct
 - **Widen the time range** — Set `$startTime` further back to capture more telemetry
+- **Increase the limit** — Try a larger `$limit` value
 - **Check for agent data** — The Application Insights resource may not have AI agent telemetry. Verify agent instrumentation is active.
-- **Reduce the limit** — If the query times out, try a smaller `$limit` value

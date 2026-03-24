@@ -35,8 +35,8 @@ If none of the above are available, follow [Identify Application Insights Resour
 Optional inputs — ask the user if they want to narrow the analysis:
 - **Agent name**: Filter by a specific agent name
 - **Agent version**: Filter by a specific agent version
-- **Limit**: Maximum number of records to analyze (1–50,000)
-- **Time range**: Start and end times for the analysis window (ISO 8601 UTC)
+- **Limit**: Maximum number of records to analyze (1–50,000). Defaults to 1000 — suitable for initial exploration; increase for thorough analysis.
+- **Time range**: Start and end times for the analysis window (ISO 8601 UTC). **Defaults to the last 24 hours.** Widen if the user wants historical analysis.
 
 ### 3. Run the analyze command
 
@@ -48,27 +48,34 @@ Run the script in [run-analyze.md](scripts/run-analyze.md) to execute the `aira.
 
 ### 4. Interpret and present the results
 
-The `analyze` command returns JSON output containing anomaly detection results, trend analysis, and performance statistics for the targeted AI agent telemetry.
+The script uses `--output summary` by default, which returns a pre-formatted text summary. Present this output directly to the user — no additional parsing is needed.
 
-When presenting results to the user:
+When presenting results, follow this structure:
 
-1. **Summarize key findings** — Start with a high-level overview: how many anomalies were detected, what the overall performance trends look like, and whether there are any critical issues.
+1. **Lead with the summary header** — State total records, agent count, and time range.
 
-2. **Highlight anomalies** — If anomalies are detected, present them clearly with:
-   - What metric or behavior is anomalous
-   - The severity or impact
-   - When the anomaly occurred
-   - Possible contributing factors
+2. **Highlight the agent performance table** — The table is sorted by P95 duration descending. Call out:
+   - Agents with P95 > 5,000ms as high-latency
+   - Agents with zero token counts (may indicate orchestration overhead, not LLM calls)
+   - Agents with only 1 call (insufficient data for trends)
 
-3. **Present performance statistics** — Show relevant performance metrics such as latency distributions, throughput, error rates, and token usage patterns.
+3. **Flag anomalies** — The summary lists high-severity anomalies (severity ≥ 3.0). For each:
+   - Explain the impact (e.g., "4,515ms spike on an agent averaging 2,000ms")
+   - Note the operation and model for context
+   - Offer to drill deeper with `response-context --response-id <id>`
 
-4. **Show trend analysis** — If trends are present, describe whether performance is improving, degrading, or stable over time.
+4. **Interpret trends** — Notable trends (confidence ≥ 0.5) are listed. Explain:
+   - Duration increasing → potential regression or growing prompt size
+   - Token usage increasing → context window growth, possible cost concern
+   - Duration decreasing → improvement or reduced workload
 
-5. **Provide actionable recommendations** — Based on the findings, suggest concrete next steps:
+5. **Provide actionable recommendations** — Based on findings, suggest:
    - Which agents or versions to investigate further
-   - Whether to compare agent versions (suggest the `compare-versions` command for follow-up)
-   - Whether to drill into specific responses (suggest using `response-context` for detailed investigation)
-   - Code or configuration changes that could address identified issues
+   - Whether to compare agent versions (`compare-versions` command)
+   - Whether to drill into specific responses (`response-context` command)
+   - Whether to widen/narrow the time range for more context
+
+> **Need raw JSON?** If deeper programmatic analysis is needed, re-run the script with `-o json` instead of `-o summary`.
 
 ### 5. Follow-up investigation
 
@@ -81,10 +88,12 @@ Based on the analysis results, offer the user follow-up options:
 ## Tips
 
 - Always confirm the Application Insights resource with the user before running the analysis.
-- Start with a default analysis (no filters) to get a broad overview, then narrow down based on findings.
-- The `--limit` parameter caps the number of telemetry records analyzed. For initial exploration, a smaller limit (e.g., 1000) gives faster results. For thorough analysis, increase the limit or omit it.
+- Start with a default analysis (no filters, last 24 hours, limit 1000) to get a broad overview, then narrow down based on findings.
+- Use `--output summary` (the default in the script) for LLM-friendly output. Switch to `--output json` only when you need raw data for programmatic follow-up.
+- The `--limit` parameter caps the number of telemetry records analyzed. The CLI defaults to 1000. For thorough analysis, increase up to 50,000.
+- The script defaults to a 24-hour time window. Widen it for historical analysis; narrow it to isolate recent incidents.
 - When comparing agent performance across versions, note the agent name from the results and suggest the user run a follow-up comparison.
-- The `--output compact` format is useful when piping results to other tools, but use the default `json` format for human-readable analysis.
+- If the CLI returns exit code 1 with "No telemetry records found", check the error message — it now provides actionable guidance on what to try next.
 
 ## References
 
