@@ -17,11 +17,10 @@ When asked to analyze performance issues based on profiler data, follow these st
 
    > **⚠️ CLI query pitfalls**: The `az monitor app-insights query` CLI has known issues that cause silent failures. Before running or modifying the query script, read [az CLI query pitfalls](../shared/az-cli-query-pitfalls.md). Key points: (1) `--offset` is **mandatory** — without it the CLI applies a 1-hour server-side filter that overrides KQL `ago()`, (2) always use `--output json` — `--output table` silently drops results for join queries, (3) flatten KQL to a single line to avoid here-string truncation.
 
-   > **⚠️ No profiler data?** If this query returns zero results **and** a direct count of `ServiceProfilerSample` events also returns zero, it means the Application Insights Profiler is not enabled or has not collected any data. In this case:
-   > 1. **Skip step 5** (Code Optimizations) entirely — Code Optimizations are generated from profiler data, so there will be nothing to query.
-   > 2. **Skip step 6** (hot path analysis) — there are no profiler traces to analyze.
-   > 3. **Recommend the `enable-profiler` skill** — tell the user to invoke the `enable-profiler` skill to get guidance on enabling the Application Insights Profiler for their platform and SDK.
-   > 4. You may still analyze request telemetry (durations, error rates, operation names) from step 3's `requests` table data to give the user a high-level picture of what's slow, but without profiler data, method-level analysis is not possible.
+   > **⚠️ No profiler data?** If this query returns zero results, check for profiler activity by counting both `ServiceProfilerIndex` (session-level) and `ServiceProfilerSample` (request-level) events:
+   > - **Neither event type exists** → the profiler is not enabled. Skip steps 5 and 6, and recommend the `enable-profiler` skill.
+   > - **`ServiceProfilerIndex` exists but no `ServiceProfilerSample`** → the profiler IS running sessions but captured zero request-level samples (e.g., low traffic, no requests during profiling windows). Skip steps 5 and 6 (Code Optimizations and hot path both require request-level samples), but do NOT recommend enabling the profiler — it is already enabled. Instead, suggest the user generate more traffic and wait for the next profiling cycle.
+   > - In either case, you may still analyze request telemetry (durations, error rates, operation names) from the `requests` table to give the user a high-level picture of what's slow, but without `ServiceProfilerSample` data, method-level analysis is not possible.
 
 4. **Present findings and let the user choose** — After collecting slow request results from step 3, present the findings to the user with investigation recommendations. Do not proceed automatically — let the user decide which request(s) to investigate.
 
@@ -41,7 +40,7 @@ When asked to analyze performance issues based on profiler data, follow these st
 
 5. **Query Code Optimizations data** — Run the script in [get-code-optimizations.md](scripts/get-code-optimizations.md) to fetch AI-powered recommendations from the profiler dataplane API. This is cheap and fast — it often points directly to the right methods without needing deeper analysis.
 
-   > **⚠️ Skip this step if no profiler data exists**: Code Optimizations are generated from profiler trace data. If step 3 found zero `ServiceProfilerSample` events, skip this step — the API will return empty results. Recommend the `enable-profiler` skill instead.
+   > **⚠️ Skip this step if no request-level profiler data exists**: Code Optimizations are generated from profiler trace data. If no `ServiceProfilerSample` events were found (regardless of whether `ServiceProfilerIndex` sessions exist), skip this step — the API will return empty results. If no `ServiceProfilerIndex` events exist either, recommend the `enable-profiler` skill.
 
    > **If no recommendations are found** (but profiler data does exist): This may happen when the profiler hasn't collected enough data yet. Try these fallback steps:
    > 1. **Widen the time range** — increase `$startTime` to cover the last 7 or 30 days instead of 24 hours.
@@ -92,7 +91,8 @@ The `get-profile-hotpath` skill returns a call tree with timing data. Use it as 
 2. If found, confirm with user; if not, identify and write to investigation notes
 3. Resolve app ID from resource ID if needed
 4. Query for slow requests with profiler traces (query-slow-requests.md)
-5. If zero ServiceProfilerSample events: recommend enable-profiler skill → stop
+5. If zero profiler events (no ServiceProfilerIndex): recommend enable-profiler skill → stop
+   If ServiceProfilerIndex exists but no ServiceProfilerSample: profiler is running but no request samples → advise on traffic/triggers → stop
 6. Present ranked results with rationales; ask user which request(s) to investigate
 7. Run get-code-optimizations.md to fetch Code Optimization recommendations
 8. Identify the top operations worth deep-diving (from steps 6–7)

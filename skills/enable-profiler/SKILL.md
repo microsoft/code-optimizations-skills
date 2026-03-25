@@ -11,7 +11,10 @@ When asked to enable the Application Insights Profiler for .NET, or when another
 
 2. **Identify the Application Insights resource** — If the investigation notes didn't have the resource or the user wants a different one, follow the steps in the [Standard Skill Preamble](../shared/standard-skill-preamble.md). After the resource is confirmed, **write or update `investigation-notes.md`** with the confirmed values. If only a resource ID is available, resolve the app ID using [resolve-app-id.md](../shared/resolve-app-id.md).
 
-3. **Check if the profiler is already active** — Run the script in [check-profiler-status.md](scripts/check-profiler-status.md) to query for `ServiceProfilerSample` events. If samples are found, the profiler is already enabled — inform the user and stop. If zero samples are found, proceed to step 4.
+3. **Check if the profiler is already active** — Run the script in [check-profiler-status.md](scripts/check-profiler-status.md) to query for both `ServiceProfilerIndex` (session-level) and `ServiceProfilerSample` (request-level) events.
+   - If both event types are found → the profiler is already enabled and capturing request data — inform the user and stop.
+   - If only `ServiceProfilerIndex` events exist (no `ServiceProfilerSample`) → the profiler IS running but is not capturing request-level samples. This is typically a traffic or trigger issue, not an enablement issue. Inform the user the profiler is enabled, and suggest checking traffic volume and trigger thresholds rather than re-enabling.
+   - If neither event type is found → the profiler is not enabled. Proceed to step 4.
 
 4. **Determine the user's environment** — Ask the user these questions (use multiple-choice where possible):
 
@@ -77,15 +80,17 @@ When asked to enable the Application Insights Profiler for .NET, or when another
 
    > **Tip — Copilot-based enablement**: For EventPipe with the OTel SDK, the user can alternatively use a Copilot prompt file to enable the profiler automatically. See: `https://github.com/Azure/azuremonitor-opentelemetry-profiler-net/blob/main/docs/AddAzureMonitorProfilerWithCoPilot.md`
 
-6. **Verify the profiler is producing data** — After the user has enabled the profiler and generated some traffic, re-run the [check-profiler-status.md](scripts/check-profiler-status.md) script to confirm `ServiceProfilerSample` events are appearing. The profiler typically takes 2–5 minutes to start producing traces after enablement.
+6. **Verify the profiler is producing data** — After the user has enabled the profiler and generated some traffic, re-run the [check-profiler-status.md](scripts/check-profiler-status.md) script to confirm profiler events are appearing. The profiler typically takes 2–5 minutes to start producing traces after enablement.
 
-   If samples are found, confirm success and suggest the user re-run the `perf-optimization` skill to investigate performance issues with the now-available profiler data.
-
-   If no samples appear after the expected wait time, suggest troubleshooting:
+   - If both `ServiceProfilerIndex` and `ServiceProfilerSample` events are found → full success. The profiler is capturing request-level data.
+   - If only `ServiceProfilerIndex` events appear → the profiler is running sessions but not capturing individual requests. This is normal if traffic is low — suggest the user generate more traffic and wait for the next profiling window.
+   - If no events appear after the expected wait time, suggest troubleshooting:
    - Verify the connection string is correct
    - Check the application logs for profiler startup messages
    - Ensure there is traffic hitting the application
    - For EventPipe: enable debug logging by setting log level for `Microsoft.ServiceProfiler` and `Microsoft.ApplicationInsights.Profiler` to `Debug`
+
+   Once both event types are confirmed, suggest the user re-run the `perf-optimization` skill to investigate performance issues with the now-available profiler data.
 
 ## Key facts
 

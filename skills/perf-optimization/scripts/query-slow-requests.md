@@ -140,8 +140,8 @@ If the query returns no rows:
 
 - **Check `--offset`** — The most common cause of empty results is a missing or too-narrow `--offset`. The `az monitor app-insights query` CLI applies a server-side time filter that **overrides** KQL `ago()`. See [az CLI query pitfalls](../../shared/az-cli-query-pitfalls.md#offset-is-mandatory).
 - **No profiler traces in the time window** — The Application Insights Profiler may not have been active or may not have captured samples. Widen the time range (e.g., 7 or 30 days).
-- **Profiler not enabled** — Verify that Application Insights Profiler is enabled on the target resource.
-- **Low traffic** — The profiler samples only a fraction of requests. If traffic is low, fewer requests will have associated traces.
-- **Verify data exists** — Run a simpler query to confirm data is present: `requests | summarize count()` and `customEvents | where name == 'ServiceProfilerSample' | summarize count()`.
+- **Profiler not enabled** — Verify that Application Insights Profiler is enabled on the target resource. Check for both `ServiceProfilerIndex` (session) and `ServiceProfilerSample` (request) events — if `ServiceProfilerIndex` exists but `ServiceProfilerSample` does not, the profiler is running but not capturing request-level data (likely low traffic).
+- **Low traffic** — The profiler samples only a fraction of requests. If traffic is low, fewer requests will have associated traces. `ServiceProfilerIndex` events (profiler sessions) may exist even when no `ServiceProfilerSample` events (individual requests) are present.
+- **Verify data exists** — Run a simpler query to confirm data is present: `requests | summarize count()` and `customEvents | where name in ('ServiceProfilerIndex', 'ServiceProfilerSample') | summarize count() by name`.
 
-When no profiler samples are available, proceed directly to the Code Optimization recommendations step — those rely on aggregated profiler data and may still return results even if individual samples aren't visible in the query.
+When no profiler samples are available, check whether `ServiceProfilerIndex` events exist — if they do, the profiler is running but not capturing request-level samples (typically a traffic issue). If neither event type exists, the profiler is not enabled. In either case, proceed directly to the Code Optimization recommendations step — those rely on aggregated profiler data and may still return results even if individual samples aren't visible in the query.
