@@ -17,6 +17,12 @@ When asked to analyze performance issues based on profiler data, follow these st
 
    > **⚠️ CLI query pitfalls**: The `az monitor app-insights query` CLI has known issues that cause silent failures. Before running or modifying the query script, read [az CLI query pitfalls](../shared/az-cli-query-pitfalls.md). Key points: (1) `--offset` is **mandatory** — without it the CLI applies a 1-hour server-side filter that overrides KQL `ago()`, (2) always use `--output json` — `--output table` silently drops results for join queries, (3) flatten KQL to a single line to avoid here-string truncation.
 
+   > **⚠️ No profiler data?** If this query returns zero results **and** a direct count of `ServiceProfilerSample` events also returns zero, it means the Application Insights Profiler is not enabled or has not collected any data. In this case:
+   > 1. **Skip step 5** (Code Optimizations) entirely — Code Optimizations are generated from profiler data, so there will be nothing to query.
+   > 2. **Skip step 6** (hot path analysis) — there are no profiler traces to analyze.
+   > 3. **Recommend the `enable-profiler` skill** — tell the user to invoke the `enable-profiler` skill to get guidance on enabling the Application Insights Profiler for their platform and SDK.
+   > 4. You may still analyze request telemetry (durations, error rates, operation names) from step 3's `requests` table data to give the user a high-level picture of what's slow, but without profiler data, method-level analysis is not possible.
+
 4. **Present findings and let the user choose** — After collecting slow request results from step 3, present the findings to the user with investigation recommendations. Do not proceed automatically — let the user decide which request(s) to investigate.
 
    **How to present the results:**
@@ -35,7 +41,9 @@ When asked to analyze performance issues based on profiler data, follow these st
 
 5. **Query Code Optimizations data** — Run the script in [get-code-optimizations.md](scripts/get-code-optimizations.md) to fetch AI-powered recommendations from the profiler dataplane API. This is cheap and fast — it often points directly to the right methods without needing deeper analysis.
 
-   > **If no recommendations are found**: This may happen when the Application Insights Profiler hasn't collected enough data, or the profiler isn't actively running. Try these fallback steps:
+   > **⚠️ Skip this step if no profiler data exists**: Code Optimizations are generated from profiler trace data. If step 3 found zero `ServiceProfilerSample` events, skip this step — the API will return empty results. Recommend the `enable-profiler` skill instead.
+
+   > **If no recommendations are found** (but profiler data does exist): This may happen when the profiler hasn't collected enough data yet. Try these fallback steps:
    > 1. **Widen the time range** — increase `$startTime` to cover the last 7 or 30 days instead of 24 hours.
    > 2. **Verify the profiler is active** — check that Application Insights Profiler is enabled and has recent profiling sessions. If step 3 returned no results either, the profiler may not be enabled.
    > 3. **Fall back to manual trace analysis** — skip to step 6 and invoke the `get-profile-hotpath` skill directly. Use the slow request IDs from step 3 (if available) to analyze the most expensive operations without Code Optimization guidance.
@@ -84,13 +92,14 @@ The `get-profile-hotpath` skill returns a call tree with timing data. Use it as 
 2. If found, confirm with user; if not, identify and write to investigation notes
 3. Resolve app ID from resource ID if needed
 4. Query for slow requests with profiler traces (query-slow-requests.md)
-5. Present ranked results with rationales; ask user which request(s) to investigate
-6. Run get-code-optimizations.md to fetch Code Optimization recommendations
-7. Identify the top operations worth deep-diving (from steps 5–6)
-8. Invoke get-profile-hotpath skill with the app ID and trace location ID
-9. Receive hot path call tree (e.g., WeatherForecastController.Get → 70% in ToList lambda)
-10. Combine hot path + recommendations into prioritized action plan
-11. Suggest code changes targeting the hot path bottleneck methods
+5. If zero ServiceProfilerSample events: recommend enable-profiler skill → stop
+6. Present ranked results with rationales; ask user which request(s) to investigate
+7. Run get-code-optimizations.md to fetch Code Optimization recommendations
+8. Identify the top operations worth deep-diving (from steps 6–7)
+9. Invoke get-profile-hotpath skill with the app ID and trace location ID
+10. Receive hot path call tree (e.g., WeatherForecastController.Get → 70% in ToList lambda)
+11. Combine hot path + recommendations into prioritized action plan
+12. Suggest code changes targeting the hot path bottleneck methods
 ```
 
 ## Tips
