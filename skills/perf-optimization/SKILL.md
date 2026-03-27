@@ -18,7 +18,7 @@ When asked to analyze performance issues based on profiler data, follow these st
    > **⚠️ CLI query pitfalls**: The `az monitor app-insights query` CLI has known issues that cause silent failures. Before running or modifying the query script, read [az CLI query pitfalls](../shared/az-cli-query-pitfalls.md). Key points: (1) `--offset` is **mandatory** — without it the CLI applies a 1-hour server-side filter that overrides KQL `ago()`, (2) always use `--output json` — `--output table` silently drops results for join queries, (3) flatten KQL to a single line to avoid here-string truncation.
 
    > **⚠️ No profiler data?** If this query returns zero results, check for profiler activity by counting both `ServiceProfilerIndex` (session-level) and `ServiceProfilerSample` (request-level) events:
-   > - **Neither event type exists** → the profiler is not enabled. Skip steps 5 and 6, and recommend the `enable-profiler` skill.
+   > - **Neither event type exists** → before recommending the `enable-profiler` skill, **check local source code for an existing profiler configuration**. Search for profiler NuGet packages (`Microsoft.ApplicationInsights.Profiler.AspNetCore` or `Azure.Monitor.OpenTelemetry.Profiler` in `*.csproj`) and registration calls (`AddServiceProfiler` or `AddAzureMonitorProfiler` in `Program.cs`/`Startup.cs`). If profiler code IS present, run [check-connection-string-match.md](../shared/check-connection-string-match.md) to verify the app's connection string points to the target resource. A **mismatch in source code** is a troubleshooting signal — note that connection strings are often overridden at deployment time via environment variables, App Service settings, or CI/CD, so a source-code mismatch does not definitively mean the app is sending data elsewhere. Present the finding to the user and ask them to confirm which scenario applies (see guidance in `check-connection-string-match.md`). Only recommend the `enable-profiler` skill if the profiler is genuinely not configured in the source code, or if connection strings match (or the mismatch is confirmed as a non-issue) but no events exist.
    > - **`ServiceProfilerIndex` exists but no `ServiceProfilerSample`** → the profiler IS running sessions but captured zero request-level samples (e.g., low traffic, no requests during profiling windows). Skip steps 5 and 6 (Code Optimizations and hot path both require request-level samples), but do NOT recommend enabling the profiler — it is already enabled. Instead, suggest the user generate more traffic and wait for the next profiling cycle.
    > - In either case, you may still analyze request telemetry (durations, error rates, operation names) from the `requests` table to give the user a high-level picture of what's slow, but without `ServiceProfilerSample` data, method-level analysis is not possible.
 
@@ -91,7 +91,11 @@ The `get-profile-hotpath` skill returns a call tree with timing data. Use it as 
 2. If found, confirm with user; if not, identify and write to investigation notes
 3. Resolve app ID from resource ID if needed
 4. Query for slow requests with profiler traces (query-slow-requests.md)
-5. If zero profiler events (no ServiceProfilerIndex): recommend enable-profiler skill → stop
+5. If zero profiler events (no ServiceProfilerIndex):
+   a. Check local source for profiler NuGet packages and registration calls
+   b. If profiler code found → run check-connection-string-match.md
+   c. If mismatch in source → present as troubleshooting signal (may be overridden at deploy time), ask user to confirm → stop or continue based on user response
+   d. If no profiler code, or strings match, or mismatch confirmed as non-issue → recommend enable-profiler skill → stop
    If ServiceProfilerIndex exists but no ServiceProfilerSample: profiler is running but no request samples → advise on traffic/triggers → stop
 6. Present ranked results with rationales; ask user which request(s) to investigate
 7. Run get-code-optimizations.md to fetch Code Optimization recommendations
