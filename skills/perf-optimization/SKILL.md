@@ -113,6 +113,7 @@ The `get-profile-hotpath` skill returns a call tree with timing data. Use it as 
 - When a profiler trace is available for a slow operation, invoke the `get-profile-hotpath` skill to get method-level bottleneck data — but only after Code Optimization recommendations have confirmed the operation is worth investigating.
 - Cross-reference hot path methods with Code Optimization recommendations for the highest-confidence optimization suggestions.
 - When suggesting code optimizations, target the specific methods identified in the hot path and consider the bottleneck type (CPU, I/O, contention).
+- **Distributed trace analysis**: If a slow operation involves calls to downstream services (visible in the `dependencies` table or hot path), and those services have their own App Insights resources, suggest the `deep-analysis` skill. The user can provide the operation ID to get a unified cross-resource timeline showing where time was spent across all services.
 
 ## References
 

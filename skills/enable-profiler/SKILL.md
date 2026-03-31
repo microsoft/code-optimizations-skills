@@ -116,7 +116,7 @@ When asked to enable the Application Insights Profiler for .NET, or when another
    - Ensure there is traffic hitting the application
    - For EventPipe: enable debug logging by setting log level for `Microsoft.ServiceProfiler` and `Microsoft.ApplicationInsights.Profiler` to `Debug`
 
-   Once both event types are confirmed, suggest the user re-run the `perf-optimization` skill to investigate performance issues with the now-available profiler data.
+   Once both event types are confirmed, suggest the user re-run the `perf-optimization` skill to investigate performance issues with the now-available profiler data. For distributed systems with multiple services, also suggest running [discover-related-resources.md](../shared/discover-related-resources.md) to map all related App Insights resources before starting analysis — this ensures profiler data and telemetry from downstream components are included in the investigation.
 
 ## Key facts
 
