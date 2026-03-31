@@ -62,6 +62,7 @@ When presenting results, follow this structure:
 3. **Flag anomalies** — The summary lists high-severity anomalies (severity ≥ 3.0). For each:
    - Explain the impact (e.g., "4,515ms spike on an agent averaging 2,000ms")
    - Note the operation and model for context
+   - **Include the operation ID** — the user will need this to drill deeper or hand off to the `deep-analysis` skill
    - Offer to drill deeper with `response-context --response-id <id>`
 
 4. **Interpret trends** — Notable trends (confidence ≥ 0.5) are listed. Explain:
@@ -84,6 +85,7 @@ Based on the analysis results, offer the user follow-up options:
 - **Deep-dive into a specific agent**: Re-run the analysis with `--agent-name` and/or `--agent-version` filters
 - **Adjust the time window**: Narrow or widen the analysis period to isolate issues
 - **Cross-reference with profiler data**: If latency issues are found, suggest using the `perf-optimization` skill to correlate with profiler traces
+- **Cross-resource deep analysis**: If an anomaly or high-latency operation involves calls to downstream services (tools, APIs, databases), suggest using the `deep-analysis` skill to trace the operation across multiple Application Insights resources. The user can provide the operation ID from the anomaly to get a unified timeline showing where time was spent across all services.
 
 ## Tips
 

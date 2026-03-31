@@ -40,6 +40,15 @@ After successfully identifying or resolving the Application Insights resource (o
 ## Additional Context
 
 <!-- Optional: free-form notes about the investigation, e.g., target endpoints, time ranges, observations -->
+
+## Related Resources
+
+<!-- Optional: populated by discover-related-resources.md when investigating distributed traces across multiple App Insights resources -->
+
+| Role | Resource Name | Resource ID | App ID | Subscription ID | Resource Group |
+|------|---------------|-------------|--------|-----------------|----------------|
+| Agent host | `<name>` | `<full ARM resource ID>` | `<GUID>` | `<GUID>` | `<name>` |
+| Tool: SearchAPI | `<name>` | `<full ARM resource ID>` | `<GUID>` | `<GUID>` | `<name>` |
 ```
 
 ## Key fields
@@ -51,6 +60,19 @@ After successfully identifying or resolving the Application Insights resource (o
 | **Subscription ID** | Azure subscription GUID. Useful for Azure CLI commands. | All skills |
 | **Resource Group** | Azure resource group name. Useful for scoped lookups. | All skills |
 | **Resource Name** | Display name of the Application Insights resource. Helps the user confirm identity. | All skills |
+
+### Related Resources fields
+
+The "Related Resources" section is optional — it is populated by [discover-related-resources.md](discover-related-resources.md) when investigating distributed traces that span multiple App Insights resources.
+
+| Field | Description | Used by |
+|---|---|---|
+| **Role** | Freeform label describing the resource's role in the architecture (e.g., "Agent host", "Tool: SearchAPI", "Backend: SQL"). Helps the user understand why this resource is relevant. | `deep-analysis` |
+| **Resource Name** | Display name of the App Insights component. | `deep-analysis`, any skill |
+| **Resource ID** | Full ARM resource ID. | `deep-analysis`, `perf-optimization` |
+| **App ID** | Application Insights app ID (GUID). | `deep-analysis`, `get-profile-hotpath` |
+| **Subscription ID** | Azure subscription GUID. | All skills |
+| **Resource Group** | Azure resource group name. | All skills |
 
 ## Parsing flexibility
 
