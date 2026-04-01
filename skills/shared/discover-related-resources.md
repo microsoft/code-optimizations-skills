@@ -72,22 +72,25 @@ Run all four strategies below. Each is independent and best-effort — some may 
 
 #### 3a. Same resource group scan
 
-Related services are often deployed in the same resource group. List App Insights components in the primary resource's resource group (excludes the primary itself):
+Related services are often deployed in the same resource group. List App Insights components in the primary resource's resource group (excludes the primary itself).
+
+> Uses `az resource list` instead of `az monitor app-insights component list` to avoid extension dependency issues. See [az CLI query pitfalls](az-cli-query-pitfalls.md#prefer-az-resource-list-over-extension-dependent-commands).
 
 ```powershell
 $resourceGroup = "<RESOURCE_GROUP>"
 $primaryName = "<COMPONENT_NAME>"
 
-$components = az monitor app-insights component list `
+$components = az resource list `
   -g "$resourceGroup" `
-  --query "[?name != '$primaryName'].{name:name, instrumentationKey:instrumentationKey, id:id, resourceGroup:resourceGroup}" `
+  --resource-type "Microsoft.Insights/components" `
+  --query "[?name != '$primaryName'].{name:name, id:id, resourceGroup:resourceGroup}" `
   --output json 2>&1
 
 if ($LASTEXITCODE -eq 0) {
   $parsed = $components | ConvertFrom-Json
   Write-Host "Found $($parsed.Count) other App Insights component(s) in resource group '$resourceGroup'"
   foreach ($c in $parsed) {
-    Write-Host "  Name: $($c.name)  IKey: $($c.instrumentationKey)"
+    Write-Host "  Name: $($c.name)  ID: $($c.id)"
   }
 } else {
   Write-Host "WARNING: Resource group scan failed. Continuing."
@@ -127,6 +130,8 @@ if ($LASTEXITCODE -eq 0) {
 
 > **Note**: Not all SDKs populate `ai.target.instrumentationKey`. This strategy works best when both the caller and target use the Application Insights SDK with cross-component correlation enabled.
 
+> **AI agent workloads**: AI agent SDKs (e.g., Azure AI Projects) typically emit dependencies with `type=AI` and `target=unknown`. This strategy will not find downstream resources for agent-to-tool calls. For agent workloads, strategy 3d (local config scan) is typically the most reliable discovery method — tool endpoints and connection strings are usually in the source code.
+
 #### 3c. Shared Log Analytics workspace
 
 App Insights resources that share the same underlying Log Analytics workspace are often part of the same application or team. Use Azure Resource Graph to find them:
@@ -146,7 +151,11 @@ if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($workspaceId)) {
 
   $graphQuery = "resources | where type == 'microsoft.insights/components' | where properties.WorkspaceResourceId == '$workspaceId' | where id != '$resourceId' | project name, id, resourceGroup, subscriptionId, instrumentationKey=properties.InstrumentationKey"
 
-  $graphResult = az graph query -q "$graphQuery" --output json 2>&1
+  # Pre-install Resource Graph extension silently to avoid interactive prompt.
+  # See az-cli-query-pitfalls.md#extension-auto-install-prompts-hang-automation
+  az extension add --name resource-graph --yes 2>$null
+
+  $graphResult = az graph query -q "$graphQuery" --first 10 --output json 2>&1
 
   if ($LASTEXITCODE -eq 0) {
     $parsed = $graphResult | ConvertFrom-Json
@@ -203,25 +212,41 @@ if ($found.Count -gt 0) {
 
 ### Step 4: Deduplicate and resolve
 
-Merge all findings from steps 3a–3d. Deduplicate by instrumentation key or resource ID. For any IKeys discovered through dependency correlation (3b) or config scan (3d) that haven't been resolved to a resource name, resolve them:
+Merge all findings from steps 3a–3d. Deduplicate by instrumentation key or resource ID. For any IKeys discovered through dependency correlation (3b) or config scan (3d) that haven't been resolved to a resource name, resolve them.
+
+Use Azure Resource Graph to search across **all accessible subscriptions** — downstream resources are often in a different subscription than the primary:
+
+> ⚠️ Pre-install the Resource Graph extension before querying. See [az CLI query pitfalls](az-cli-query-pitfalls.md#extension-auto-install-prompts-hang-automation).
 
 ```powershell
-$subscriptionId = "<SUBSCRIPTION_ID>"
 $unknownIKey = "<INSTRUMENTATION_KEY>"
 
-# List all components in the subscription and filter by IKey
-$component = az monitor app-insights component list `
-  --subscription "$subscriptionId" `
-  --query "[?instrumentationKey == '$unknownIKey'].{name:name, id:id, resourceGroup:resourceGroup, instrumentationKey:instrumentationKey}" `
-  --output json 2>&1
+# Pre-install Resource Graph extension silently
+az extension add --name resource-graph --yes 2>$null
+
+# Search across ALL accessible subscriptions for this IKey
+$graphQuery = "resources | where type == 'microsoft.insights/components' | where properties.InstrumentationKey == '$unknownIKey' | project name, id, resourceGroup, subscriptionId, instrumentationKey=properties.InstrumentationKey"
+
+$graphResult = az graph query -q "$graphQuery" --first 5 --output json 2>&1
 
 if ($LASTEXITCODE -eq 0) {
-  $parsed = $component | ConvertFrom-Json
-  if ($parsed.Count -gt 0) {
-    Write-Host "Resolved IKey $unknownIKey → $($parsed[0].name) (RG: $($parsed[0].resourceGroup))"
+  $parsed = $graphResult | ConvertFrom-Json
+  if ($parsed.data.Count -gt 0) {
+    foreach ($r in $parsed.data) {
+      Write-Host "Resolved IKey $unknownIKey → $($r.name) (RG: $($r.resourceGroup), Sub: $($r.subscriptionId))"
+    }
   } else {
-    Write-Host "WARNING: IKey $unknownIKey not found in subscription $subscriptionId. It may belong to a different subscription."
+    Write-Host "WARNING: IKey $unknownIKey not found in any accessible subscription."
   }
+} else {
+  Write-Host "WARNING: Resource Graph query failed. Falling back to single-subscription lookup."
+  # Fallback: search only the primary subscription
+  $subscriptionId = "<SUBSCRIPTION_ID>"
+  $component = az resource list `
+    --subscription "$subscriptionId" `
+    --resource-type "Microsoft.Insights/components" `
+    --query "[?properties.InstrumentationKey == '$unknownIKey'].{name:name, id:id, resourceGroup:resourceGroup}" `
+    --output json 2>&1
 }
 ```
 
@@ -257,8 +282,9 @@ If the section already exists, merge — update existing entries and append new 
 
 ## Limitations
 
-- **Dependency IKey correlation (3b)** depends on the SDK populating `ai.target.instrumentationKey`. This works best with cross-component correlation enabled; many apps won't have this.
-- **Shared workspace scan (3c)** requires the `resource-graph` Azure CLI extension. If not installed, this strategy is skipped with a warning.
-- **Config scan (3d)** only finds connection strings in local source code. Deployed apps may use different connection strings set via environment variables or Key Vault.
-- **IKey resolution (Step 4)** lists all components in a subscription to find a match — this is a targeted query filtered by IKey, not an unbounded scan.
+- **Same resource group scan (3a)** only finds resources co-located in the primary resource group. Downstream services are often in different resource groups or even different subscriptions.
+- **Dependency IKey correlation (3b)** depends on the SDK populating `ai.target.instrumentationKey`. This works best with cross-component correlation enabled; many apps won't have this. **AI agent telemetry** (type=AI) typically has `target=unknown`, making this strategy ineffective for agent-to-tool dependencies.
+- **Shared workspace scan (3c)** requires the `resource-graph` Azure CLI extension. The script pre-installs it, but the query may be slow if the user has access to many subscriptions.
+- **Config scan (3d)** only finds connection strings in local source code. Deployed apps may use different connection strings set via environment variables or Key Vault. **For AI agent workloads, this is often the most reliable strategy** since tool endpoints are typically in the source code.
+- **IKey resolution (Step 4)** uses Azure Resource Graph to search across all accessible subscriptions, with a single-subscription fallback.
 - Not all dependency targets will have their own App Insights resource. The discovery is best-effort.

@@ -92,12 +92,68 @@ Alternatively, use single-quoted strings (but then you can't interpolate other v
 $query = 'requests | join kind=inner events on $left.id == $right.RequestId_'
 ```
 
+## Extension auto-install prompts hang automation
+
+Some `az` commands require CLI extensions (e.g., `az graph query` requires `resource-graph`). When an extension isn't installed, the CLI prompts interactively:
+
+```
+The command requires the extension resource-graph. Do you want to install it now? (Y/n):
+```
+
+This prompt **hangs indefinitely** in non-interactive or automated contexts (CI/CD, agent-driven sessions, piped scripts) because there is no TTY to provide input.
+
+**Fix**: Pre-install required extensions silently before using them:
+
+```powershell
+# Pre-install the extension silently (idempotent — safe to run even if already installed)
+az extension add --name resource-graph --yes 2>$null
+
+# Now the command will work without prompting
+az graph query -q "$graphQuery" --output json
+```
+
+The `--yes` flag suppresses the confirmation prompt. The `2>$null` suppresses "already installed" warnings.
+
+> ⚠️ This applies to **all** extension-dependent commands, not just `az graph query`. Common extensions that may trigger this: `resource-graph`, `application-insights`, `monitor-control-service`.
+
+## Prefer `az resource list` over extension-dependent commands
+
+Some `az` subcommands (e.g., `az monitor app-insights component list`) depend on CLI extensions that may not be installed or may have version incompatibilities. These can fail with cryptic errors like "'list' is misspelled or not recognized".
+
+**Fix**: When you only need basic resource metadata (name, ID, resource group), use the built-in `az resource list` command instead:
+
+```powershell
+# BAD: Requires the application-insights extension
+az monitor app-insights component list -g "$resourceGroup" --output json
+
+# GOOD: Works without any extensions
+az resource list -g "$resourceGroup" --resource-type "Microsoft.Insights/components" --output json
+```
+
+`az resource list` is part of the core CLI and works with any resource type.
+
+For **single-resource lookups** when you already have the resource ID, `az monitor app-insights component show` is the best option — it returns rich properties (InstrumentationKey, AppId, WorkspaceResourceId) that `az resource list` doesn't expose directly:
+
+```powershell
+# Show a specific App Insights resource by ID — returns full properties
+az monitor app-insights component show --ids "$resourceId" --output json
+
+# Query specific properties
+az monitor app-insights component show --ids "$resourceId" --query "{name:name, ikey:instrumentationKey, appId:appId, workspace:workspaceResourceId}" --output json
+```
+
+> **Note**: `component show` requires the `application-insights` extension. Pre-install it to avoid interactive prompts (see [above](#extension-auto-install-prompts-hang-automation)).
+
+**Summary**: Use `az resource list` for **listing/searching** (no extension needed). Use `az monitor app-insights component show --ids` for **single-resource property lookups** (extension required but richer data).
+
 ## Summary checklist
 
-Before running any `az monitor app-insights query` command, verify:
+Before running any `az` CLI command in an automated context, verify:
 
-- [ ] `--offset` is set to an ISO 8601 duration ≥ the KQL lookback window
+- [ ] `--offset` is set to an ISO 8601 duration ≥ the KQL lookback window (for `az monitor app-insights query`)
 - [ ] `--output json` is used (not `--output table`)
 - [ ] KQL is on a single line (no multi-line here-strings)
 - [ ] `$left` / `$right` are backtick-escaped if inside double-quoted strings
 - [ ] Error handling checks for empty/error output before parsing
+- [ ] Required CLI extensions are pre-installed with `az extension add --name <ext> --yes` before use
+- [ ] `az resource list` is preferred over extension-dependent commands when basic metadata is sufficient

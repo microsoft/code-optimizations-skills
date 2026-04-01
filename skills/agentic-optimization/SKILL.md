@@ -38,6 +38,19 @@ Optional inputs — ask the user if they want to narrow the analysis:
 - **Limit**: Maximum number of records to analyze (1–50,000). Defaults to 1000 — suitable for initial exploration; increase for thorough analysis.
 - **Time range**: Start and end times for the analysis window (ISO 8601 UTC). **Defaults to the last 24 hours.** Widen if the user wants historical analysis.
 
+### 2b. Create or update investigation notes
+
+If `investigation-notes.md` does not already exist in the working directory, create it now with the resource context gathered in steps 1–2. This ensures downstream skills (especially `deep-analysis`) can pick up the context without re-asking the user.
+
+Write the following fields to `investigation-notes.md` using the format defined in [investigation-notes.md](../shared/investigation-notes.md):
+
+- **Subscription ID**
+- **Resource Group**
+- **Component Name**
+- **Resource ID** (constructed from the above: `/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/microsoft.insights/components/{componentName}`)
+
+If the file already exists, verify the resource context matches and update if needed.
+
 ### 3. Run the analyze command and present results
 
 Run the script in [run-analyze.md](scripts/run-analyze.md) to execute the `aira.exe analyze` command. The script acquires a fresh access token, invokes the CLI with JSON output, and post-processes the results into a readable summary **with operation IDs extracted** — all in a single run.
@@ -74,10 +87,19 @@ The script output contains everything needed to present results and offer deep-d
 
 ### 4. Deep-dive handoff
 
-If the anomaly operations table has entries, ask the user which operation to investigate further:
+If the anomaly operations table has entries, **write the key findings to `investigation-notes.md`** before handing off:
 
-- **Cross-resource deep analysis** (recommended): Hand off the selected operation ID to the `deep-analysis` skill to trace the operation across downstream services (tools, APIs, databases) and see where time was spent.
-- **Response context**: Run `aira.exe response-context --response-id <operationId>` to see the full agent conversation flow for that operation.
+1. Add a **"Key Findings"** section with:
+   - Agent name, time window, and summary statistics (mean, P95, max latency)
+   - The bottleneck layer (LLM vs tool calls) and which tools are slowest
+   - Trend direction if notable
+
+2. Add an **"Anomaly Operations"** section with the top anomaly operation IDs, durations, and severity scores
+
+Then ask the user which operation to investigate further:
+
+- **Cross-resource deep analysis** (recommended): Hand off the selected operation ID to the `deep-analysis` skill to trace the operation across downstream services (tools, APIs, databases) and see where time was spent. The operation ID and resource context will be available in `investigation-notes.md`.
+- **Response context**: Run `aira.exe response-context --response-id <responseId>` to see the full agent conversation flow for that operation. **Important**: use the `responseId` field (not the `operationId`) as the `--response-id` argument — these are different identifiers. The anomaly table output includes both.
 - **Compare agent versions**: If the issue correlates with a specific agent version, suggest `aira.exe compare-versions`.
 
 If the anomaly operations table is **empty** (no spikes detected), suggest:

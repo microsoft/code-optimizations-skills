@@ -35,6 +35,8 @@ Check whether `investigation-notes.md` has a **"Related Resources"** section wit
 - If **related resources exist** → present them to the user and ask whether to reuse or re-discover.
 - If **no related resources** → run [discover-related-resources.md](../shared/discover-related-resources.md) to find downstream App Insights resources. This uses 4 targeted strategies (same resource group, dependency IKey correlation, shared workspace, local config scan).
 
+> **AI agent workloads**: For AI agent scenarios, dependency telemetry often has `target=unknown` (type=AI), making dependency-based discovery ineffective. The **local config scan** (strategy 3d) is typically the most reliable — tool endpoints and connection strings are usually in the source code. Also note that downstream resources may be in a **different subscription** than the agent — the discovery script uses cross-subscription Resource Graph queries to handle this.
+
 After discovery, confirm the list of resources with the user. Each resource should have a role label (e.g., "Agent host", "Tool: SearchAPI").
 
 ### 4. Fetch operation context from primary resource
@@ -179,11 +181,28 @@ Merge all telemetry from the primary and related resources into a **unified time
 
 4. **Profiler availability** — For resources with profiler data covering this time window, note that method-level analysis is available.
 
+### 6b. Source code analysis for bottleneck tool calls
+
+When the cross-resource analysis identifies a **tool call or API call** as the dominant bottleneck (e.g., >50% of total operation time), scan the local codebase for the tool's implementation to identify the root cause.
+
+This is especially valuable for AI agent workloads where the agent and its tools are often in the same repository.
+
+1. **Identify the tool name** from the telemetry (e.g., `execute_tool remote_openapi.GetUserFunc_GetUsers`)
+2. **Search the codebase** for the function implementation — look for matching function names, API route definitions, or OpenAPI operation IDs
+3. **Examine the implementation** for common bottlenecks:
+   - Slow SQL queries (missing indexes, N+1 queries, `WAITFOR DELAY`, full table scans)
+   - Unoptimized external API calls (missing caching, sequential instead of parallel calls)
+   - Large data transfers (returning all rows without pagination)
+   - Blocking I/O (synchronous calls in async contexts)
+4. **Present findings** to the user with the specific code location and a concrete optimization recommendation
+
+> If the source code is not available in the working directory, inform the user and suggest they provide the repository path or examine the code manually.
+
 ### 7. Suggest next steps
 
 Based on the findings, offer actionable follow-ups:
 
-- **Profiler deep-dive**: If a downstream resource has profiler data → suggest `get-profile-hotpath` targeting that resource for the relevant time window
+- **Profiler deep-dive**: If a downstream resource has profiler data (detected in step 5's profiler check) → offer to invoke `get-profile-hotpath` immediately, passing the trace location ID from the `ServiceProfilerSample` event's `customDimensions.ServiceProfilerContent` field. This provides method-level call tree analysis without requiring the user to switch skills manually.
 - **Performance optimization**: If a downstream resource shows high latency → suggest `perf-optimization` targeting that resource
 - **Code optimizations**: If a downstream resource has Code Optimization recommendations → suggest fetching them
 - **Compare agent versions**: If the issue correlates with a specific agent version → suggest `aira.exe compare-versions`

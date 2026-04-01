@@ -169,6 +169,7 @@ if ($allSpikes.Count -gt 0) {
     $top = $group[0]
     [PSCustomObject]@{
       OperationId = $top.OperationId
+      ResponseId  = $top.ResponseId
       Agent       = $top.Agent
       MaxDuration = $top.Duration
       MaxSeverity = ($group | Measure-Object -Property Severity -Maximum).Maximum
@@ -178,12 +179,12 @@ if ($allSpikes.Count -gt 0) {
   } | Sort-Object -Property MaxDuration -Descending
 
   Write-Host "=== ANOMALY OPERATIONS (ready for deep-dive) ==="
-  Write-Host ("{0,-5} {1,-36} {2,12} {3,10} {4,-30} {5}" -f "#", "Operation ID", "Duration(ms)", "Severity", "Span Types", "Model")
-  Write-Host ("-" * 110)
+  Write-Host ("{0,-5} {1,-36} {2,-36} {3,12} {4,10} {5,-30} {6}" -f "#", "Operation ID", "Response ID", "Duration(ms)", "Severity", "Span Types", "Model")
+  Write-Host ("-" * 150)
 
   $i = 1
   foreach ($op in $uniqueOps) {
-    Write-Host ("{0,-5} {1,-36} {2,12} {3,10} {4,-30} {5}" -f $i, $op.OperationId, $op.MaxDuration, $op.MaxSeverity, $op.SpanTypes, $op.Model)
+    Write-Host ("{0,-5} {1,-36} {2,-36} {3,12} {4,10} {5,-30} {6}" -f $i, $op.OperationId, $op.ResponseId, $op.MaxDuration, $op.MaxSeverity, $op.SpanTypes, $op.Model)
     $i++
   }
 } else {
@@ -222,3 +223,12 @@ If the command returns exit code 1 with "No telemetry records found":
 - **Widen the time range** — Set `$startTime` further back to capture more telemetry
 - **Increase the limit** — Try a larger `$limit` value
 - **Check for agent data** — The Application Insights resource may not have AI agent telemetry. Verify agent instrumentation is active.
+
+### `responseId` vs `operationId`
+
+The anomaly table displays both **Operation ID** and **Response ID**. These are different identifiers:
+
+- **Operation ID** (`operationId`): The distributed tracing correlation ID. Use this with `deep-analysis` to trace across resources and with `az monitor app-insights query` to find related telemetry.
+- **Response ID** (`responseId`): The AI agent response identifier. Use this with `aira.exe response-context --response-id <responseId>` to fetch the agent's conversation flow and tool invocations.
+
+> ⚠️ Do not use the `operationId` as the `--response-id` argument — `aira.exe response-context` expects the response ID, not the operation ID. Using the wrong identifier returns empty results (`[]`).
