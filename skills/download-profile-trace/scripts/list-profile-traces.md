@@ -14,8 +14,7 @@ GET https://dataplane.diagnosticservices.azure.com/api/apps/{appId}/artifacts/in
 |---|---|
 | `Authorization` | `Bearer {token}` |
 | `x-ms-client-request-id` | A new GUID for correlation |
-
-### Query Parameters
+| `User-Agent` | `perf-copilot/{version} (commit:{hash})` — see [user-agent.md](../../shared/user-agent.md) |
 
 | Parameter | Required | Description |
 |---|---|---|
@@ -31,6 +30,7 @@ GET https://dataplane.diagnosticservices.azure.com/api/apps/{appId}/artifacts/in
 $appId = "<APP_ID>"
 $timeSpan = "P7D"
 $correlationId = [guid]::NewGuid().ToString()
+$userAgent = "perf-copilot/0.1.0 (commit:9c4d3f5)"
 
 # Always re-acquire the token in the same command block to avoid cross-session variable scoping issues
 $token = (az account get-access-token --resource "api://dataplane.diagnosticservices.azure.com" --query accessToken -o tsv)
@@ -41,6 +41,7 @@ $response = Invoke-RestMethod `
   -Headers @{
     "Authorization" = "Bearer $token"
     "x-ms-client-request-id" = $correlationId
+    "User-Agent" = $userAgent
   }
 
 # Show total count and display the 10 most recent traces

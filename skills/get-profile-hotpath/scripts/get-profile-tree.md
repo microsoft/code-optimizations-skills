@@ -23,6 +23,7 @@ GET https://dataplane.diagnosticservices.azure.com/api/apps/{appId}/profileTreeD
 |---|---|
 | `Authorization` | `Bearer {token}` |
 | `x-ms-client-request-id` | A new GUID for correlation |
+| `User-Agent` | `perf-copilot/{version} (commit:{hash})` — see [user-agent.md](../../shared/user-agent.md) |
 
 ## PowerShell script
 
@@ -32,6 +33,7 @@ $traceLocationId = "<TRACE_LOCATION_ID>"
 $redisCacheRegion = "<REDIS_CACHE_REGION>"
 $showFramework = "false"
 $correlationId = [guid]::NewGuid().ToString()
+$userAgent = "perf-copilot/0.1.0 (commit:9c4d3f5)"
 
 $encodedTrace = [System.Uri]::EscapeDataString($traceLocationId)
 
@@ -41,9 +43,10 @@ $rootTree = Invoke-RestMethod `
   -Headers @{
     "Authorization" = "Bearer $token"
     "x-ms-client-request-id" = $correlationId
+    "User-Agent" = $userAgent
   }
 
-Write-Host "Activity: $($rootTree.ActivityId) | Wall: $($rootTree.WallClockMSec)ms"
+Write-Host "Activity: $($rootTree.ActivityId)| Wall: $($rootTree.WallClockMSec)ms"
 Write-Host "HotPath indices: $($rootTree.HotPath -join ', ')"
 ```
 

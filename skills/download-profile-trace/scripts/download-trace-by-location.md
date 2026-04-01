@@ -35,6 +35,7 @@ POST https://dataplane.diagnosticservices.azure.com/api/apps/{appId}/artifacts/b
 | `Authorization` | `Bearer {token}` |
 | `Content-Type` | `application/json` |
 | `x-ms-client-request-id` | A new GUID for correlation |
+| `User-Agent` | `perf-copilot/{version} (commit:{hash})` — see [user-agent.md](../../shared/user-agent.md) |
 
 ### Query Parameters
 
@@ -61,6 +62,7 @@ $traceLocationId = "<TRACE_LOCATION_ID>"  # e.g., "v1|stampid|appid|machine|1874
 # Check the blobUri from the listing to determine the correct file extension (.etl, .etl.zip, .netperf)
 $outputPath = "<OUTPUT_FILE_PATH>"
 $correlationId = [guid]::NewGuid().ToString()
+$userAgent = "perf-copilot/0.1.0 (commit:9c4d3f5)"
 
 # Always re-acquire the token in the same command block to avoid cross-session variable scoping issues
 $token = (az account get-access-token --resource "api://dataplane.diagnosticservices.azure.com" --query accessToken -o tsv)
@@ -71,6 +73,7 @@ $headers = @{
     "Authorization" = "Bearer $token"
     "Content-Type" = "application/json"
     "x-ms-client-request-id" = $correlationId
+    "User-Agent" = $userAgent
 }
 
 # The body is required for the authorization filter; the query param is required for controller binding

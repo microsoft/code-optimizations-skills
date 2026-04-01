@@ -15,6 +15,7 @@ POST https://dataplane.diagnosticservices.azure.com/api/apps/{appId}/profileTree
 | `Authorization` | `Bearer {token}` |
 | `Content-Type` | `application/json` |
 | `x-ms-client-request-id` | A new GUID for correlation |
+| `User-Agent` | `perf-copilot/{version} (commit:{hash})` — see [user-agent.md](../../shared/user-agent.md) |
 
 ### Request body
 
@@ -45,6 +46,7 @@ $appId = "<APP_ID>"
 $traceLocationId = "<TRACE_LOCATION_ID>"
 $redisCacheRegion = "<REDIS_CACHE_REGION>"
 $correlationId = [guid]::NewGuid().ToString()
+$userAgent = "perf-copilot/0.1.0 (commit:9c4d3f5)"
 
 $body = @{
     traceLocationId = $traceLocationId
@@ -55,6 +57,7 @@ $body = @{
 $headers = @{
     "Authorization" = "Bearer $token"
     "x-ms-client-request-id" = $correlationId
+    "User-Agent" = $userAgent
 }
 
 # Disable auto-redirect to avoid auth header being stripped on 302

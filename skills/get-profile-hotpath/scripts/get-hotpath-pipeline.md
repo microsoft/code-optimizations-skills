@@ -21,9 +21,11 @@ $showFramework = "false"
 
 # --- Step 1: Acquire token ---
 $token = (az account get-access-token --resource "api://dataplane.diagnosticservices.azure.com" --query accessToken -o tsv)
+$userAgent = "perf-copilot/0.1.0 (commit:9c4d3f5)"
 $headers = @{
     "Authorization" = "Bearer $token"
     "x-ms-client-request-id" = [guid]::NewGuid().ToString()
+    "User-Agent" = $userAgent
 }
 
 # --- Step 2: Get metadata (redisCacheRegion) ---
@@ -44,6 +46,7 @@ $body = @{
 $triggerHeaders = @{
     "Authorization" = "Bearer $token"
     "x-ms-client-request-id" = [guid]::NewGuid().ToString()
+    "User-Agent" = $userAgent
 }
 
 $skipPoll = $false
@@ -61,6 +64,7 @@ try {
         $rootTree = Invoke-RestMethod -Uri $redirectUrl -Method GET -Headers @{
             "Authorization" = "Bearer $token"
             "x-ms-client-request-id" = [guid]::NewGuid().ToString()
+            "User-Agent" = $userAgent
         }
         $skipPoll = $true
     } else {
@@ -76,6 +80,7 @@ if ($skipPoll) {
     $rootTree = Invoke-RestMethod -Uri $redirectUrl -Method GET -Headers @{
         "Authorization" = "Bearer $token"
         "x-ms-client-request-id" = [guid]::NewGuid().ToString()
+        "User-Agent" = $userAgent
     }
     $skipPoll = $true
 } elseif ($triggerResponse.StatusCode -eq 202) {
@@ -97,6 +102,7 @@ if (-not $skipPoll) {
             $pollResponse = Invoke-WebRequest -Uri $statusUri -Method GET -Headers @{
                 "Authorization" = "Bearer $token"
                 "x-ms-client-request-id" = [guid]::NewGuid().ToString()
+                "User-Agent" = $userAgent
             } -MaximumRedirection 0 -SkipHttpErrorCheck
         } catch {
             if ($_.Exception.Response.StatusCode -eq 302 -or $_.Exception.Response.StatusCode.value__ -eq 302) {
@@ -137,10 +143,11 @@ if (-not $skipPoll) {
       -Method GET -Headers @{
         "Authorization" = "Bearer $token"
         "x-ms-client-request-id" = [guid]::NewGuid().ToString()
+        "User-Agent" = $userAgent
       }
 }
 
-# --- Step 6: Display root info ---
+# --- Step 6:Display root info ---
 Write-Host "`nActivity: $($rootTree.ActivityId) | Wall: $($rootTree.WallClockMSec)ms"
 Write-Host "CPU: $($rootTree.TotalCpuTime)ms | Await: $($rootTree.TotalAwaitTime)ms | Blocked: $($rootTree.TotalBlockedTime)ms"
 Write-Host "HotPath indices: $($rootTree.HotPath -join ', ')"
@@ -188,9 +195,10 @@ for ($round = 1; $round -le $maxRounds; $round++) {
       -Method GET -Headers @{
         "Authorization" = "Bearer $token"
         "x-ms-client-request-id" = [guid]::NewGuid().ToString()
+        "User-Agent" = $userAgent
       }
 
-    $newCount = 0
+    $newCount= 0
     foreach ($node in $childNodes) {
         if (-not $loadedNodes.ContainsKey([string]$node.Meta.Index)) { $newCount++ }
         $loadedNodes[[string]$node.Meta.Index] = $node

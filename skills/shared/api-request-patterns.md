@@ -18,15 +18,24 @@ Generate a unique GUID for each request to enable request tracing and diagnostic
 $correlationId = [guid]::NewGuid().ToString()
 ```
 
+## User-Agent
+
+All HTTP requests must include a `User-Agent` header to identify this plugin. See [user-agent.md](user-agent.md) for the full convention.
+
+```powershell
+$userAgent = "perf-copilot/0.1.0 (commit:9c4d3f5)"
+```
+
 ## Standard headers
 
-All dataplane API calls require an `Authorization` header and a `x-ms-client-request-id` header for correlation:
+All dataplane API calls require an `Authorization` header, a `x-ms-client-request-id` header for correlation, and a `User-Agent` header:
 
 ```powershell
 # For GET requests (no body)
 $headers = @{
     "Authorization" = "Bearer $token"
     "x-ms-client-request-id" = $correlationId
+    "User-Agent" = $userAgent
 }
 
 # For POST/PUT requests with a JSON body — add Content-Type
@@ -34,6 +43,7 @@ $headers = @{
     "Authorization" = "Bearer $token"
     "Content-Type" = "application/json"
     "x-ms-client-request-id" = $correlationId
+    "User-Agent" = $userAgent
 }
 ```
 

@@ -23,8 +23,7 @@ GET https://dataplane.diagnosticservices.azure.com/api/apps/{appId}/profileTreeC
 |---|---|
 | `Authorization` | `Bearer {token}` |
 | `x-ms-client-request-id` | A new GUID for correlation |
-
-## Redirect behaviour (important)
+| `User-Agent` | `perf-copilot/{version} (commit:{hash})` — see [user-agent.md](../../shared/user-agent.md) |
 
 When the analysis completes, the status endpoint may return a **302 redirect** to the profile tree result. See [302-redirect-handling.md](../../shared/302-redirect-handling.md) for the full explanation and workaround pattern.
 
@@ -38,12 +37,14 @@ $traceLocationId = "<TRACE_LOCATION_ID>"
 $redisCacheRegion = "<REDIS_CACHE_REGION>"
 $showFramework = "false"
 $correlationId = [guid]::NewGuid().ToString()
+$userAgent = "perf-copilot/0.1.0 (commit:9c4d3f5)"
 
 $encodedTrace = [System.Uri]::EscapeDataString($traceLocationId)
 $statusUri = "https://dataplane.diagnosticservices.azure.com/api/apps/$appId/profileTreeComputeStatus?t=$encodedTrace&f=$showFramework&api-version=2024-03-06-preview&r=$redisCacheRegion"
 $headers = @{
     "Authorization" = "Bearer $token"
     "x-ms-client-request-id" = $correlationId
+    "User-Agent" = $userAgent
 }
 
 # Increase maxAttempts for large traces if needed (45 × 2s ≈ 90 seconds)

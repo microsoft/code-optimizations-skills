@@ -2,6 +2,7 @@
   "name": "perf-copilot",
   "description": "Performance optimization skills and Azure monitoring integrations for GitHub Copilot CLI",
   "version": "0.1.0",
+  "commit": "9c4d3f5",
   "author": {
     "name": "Saar Shen",
     "url": "https://github.com/xiaomi7732"

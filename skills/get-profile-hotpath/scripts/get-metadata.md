@@ -14,12 +14,14 @@ GET https://dataplane.diagnosticservices.azure.com/api/apps/{appId}/profileTreeM
 |---|---|
 | `Authorization` | `Bearer {token}` |
 | `x-ms-client-request-id` | A new GUID for correlation |
+| `User-Agent` | `perf-copilot/{version} (commit:{hash})` — see [user-agent.md](../../shared/user-agent.md) |
 
 ## PowerShell script
 
 ```powershell
 $appId = "<APP_ID>"
 $correlationId = [guid]::NewGuid().ToString()
+$userAgent = "perf-copilot/0.1.0 (commit:9c4d3f5)"
 
 $metadataResponse = Invoke-RestMethod `
   -Uri "https://dataplane.diagnosticservices.azure.com/api/apps/$appId/profileTreeMetadata?api-version=2024-03-06-preview" `
@@ -27,6 +29,7 @@ $metadataResponse = Invoke-RestMethod `
   -Headers @{
     "Authorization" = "Bearer $token"
     "x-ms-client-request-id" = $correlationId
+    "User-Agent" = $userAgent
   }
 
 $redisCacheRegion = $metadataResponse.redisCacheRegion

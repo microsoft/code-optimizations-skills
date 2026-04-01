@@ -16,6 +16,7 @@ GET https://dataplane.diagnosticservices.azure.com/api/apps/{appId}/artifacts/{a
 |---|---|
 | `Authorization` | `Bearer {token}` |
 | `x-ms-client-request-id` | A new GUID for correlation |
+| `User-Agent` | `perf-copilot/{version} (commit:{hash})` — see [user-agent.md](../../shared/user-agent.md) |
 
 ## PowerShell script
 
@@ -27,6 +28,7 @@ $artifactId = "<ARTIFACT_ID>"
 # Check the blobUri from the listing to determine the correct file extension (.etl, .etl.zip, .netperf)
 $outputPath = "<OUTPUT_FILE_PATH>"
 $correlationId = [guid]::NewGuid().ToString()
+$userAgent = "perf-copilot/0.1.0 (commit:9c4d3f5)"
 
 # Always re-acquire the token in the same command block to avoid cross-session variable scoping issues
 $token = (az account get-access-token --resource "api://dataplane.diagnosticservices.azure.com" --query accessToken -o tsv)
@@ -34,6 +36,7 @@ $token = (az account get-access-token --resource "api://dataplane.diagnosticserv
 $headers = @{
     "Authorization" = "Bearer $token"
     "x-ms-client-request-id" = $correlationId
+    "User-Agent" = $userAgent
 }
 
 # The endpoint returns a 302 redirect to a SAS-protected blob URL.

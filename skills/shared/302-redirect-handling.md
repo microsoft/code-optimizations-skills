@@ -18,6 +18,8 @@ When the profiler dataplane returns a 302 redirect (e.g., from `profileTreeDefin
 Disable automatic redirects with `-MaximumRedirection 0` and handle the 302 manually:
 
 ```powershell
+$userAgent = "perf-copilot/0.1.0 (commit:9c4d3f5)"
+
 # Disable auto-redirect to avoid auth header being stripped on 302
 $response = Invoke-WebRequest `
   -Uri $uri `
@@ -34,6 +36,8 @@ if ($response.StatusCode -eq 302) {
     $result = Invoke-RestMethod -Uri $redirectUrl -Method GET -Headers $headers
 }
 ```
+
+> **Note:** Ensure `$headers` includes `"User-Agent" = $userAgent` as described in [user-agent.md](user-agent.md). The redirect follow-up call reuses the same `$headers`, so the User-Agent is automatically preserved.
 
 ## PowerShell exception on 302
 

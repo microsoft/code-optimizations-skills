@@ -20,7 +20,7 @@ GET https://dataplane.diagnosticservices.azure.com/api/apps/{appId}/profileTreeC
 
 ### Headers
 
-Same as the root tree call (`Authorization` and `x-ms-client-request-id`).
+Same as the root tree call (`Authorization`, `x-ms-client-request-id`, and `User-Agent`). See [user-agent.md](../../shared/user-agent.md).
 
 ## PowerShell script
 
@@ -30,6 +30,7 @@ $traceLocationId = "<TRACE_LOCATION_ID>"
 $redisCacheRegion = "<REDIS_CACHE_REGION>"
 $showFramework = "false"
 $correlationId = [guid]::NewGuid().ToString()
+$userAgent = "perf-copilot/0.1.0 (commit:9c4d3f5)"
 
 # pendingIndices: array of node index strings to fetch, e.g. @("32", "33", "34")
 $pendingIndices = @("<INDEX1>", "<INDEX2>")
@@ -43,6 +44,7 @@ $childNodes = Invoke-RestMethod `
   -Headers @{
     "Authorization" = "Bearer $token"
     "x-ms-client-request-id" = $correlationId
+    "User-Agent" = $userAgent
   }
 
 # childNodes is a JSON array of node objects

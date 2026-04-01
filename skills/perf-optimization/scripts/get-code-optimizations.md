@@ -48,6 +48,7 @@ $appId = "<APP_ID>"
 $endTime = (Get-Date).ToUniversalTime()
 $startTime = $endTime.AddDays(-1)
 $correlationId = [guid]::NewGuid().ToString()
+$userAgent = "perf-copilot/0.1.0 (commit:9c4d3f5)"
 
 # Always re-acquire the token in the same command block to avoid cross-session variable scoping issues
 $token = (az account get-access-token --resource "api://dataplane.diagnosticservices.azure.com" --query accessToken -o tsv)
@@ -63,6 +64,7 @@ $response = Invoke-RestMethod `
   -Headers @{
     "Authorization" = "Bearer $token"
     "x-ms-client-request-id" = $correlationId
+    "User-Agent" = $userAgent
   }
 
 # Display results
