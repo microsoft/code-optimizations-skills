@@ -4,6 +4,8 @@ A [GitHub Copilot CLI](https://docs.github.com/en/copilot/github-copilot-in-the-
 
 [![Watch the video](https://img.youtube.com/vi/uOdFUaCi8is/maxresdefault.jpg)](https://youtu.be/uOdFUaCi8is)
 
+▶ [Watch the demo video](https://youtu.be/uOdFUaCi8is)
+
 ## What's Included
 
 ### Skills
