@@ -71,6 +71,15 @@ copilot "Get the hot path from my latest profiler trace"
 
 # Download a trace for offline analysis
 copilot "Download a profiler trace from my App Insights resource"
+
+# Enable the profiler on your app
+copilot "Help me enable the Application Insights Profiler"
+
+# Analyze AI agent performance
+copilot "Analyze my AI agent telemetry for anomalies"
+
+# Deep analysis of a distributed trace
+copilot "Do a deep analysis of operation ID abc-123"
 ```
 
 ## Project Structure
