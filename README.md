@@ -9,8 +9,11 @@ A [GitHub Copilot CLI](https://docs.github.com/en/copilot/github-copilot-in-the-
 | Skill | Description |
 |-------|-------------|
 | **perf-optimization** | Analyzes performance issues using Application Insights telemetry, Code Optimizations, and profiler hot paths to identify CPU, latency, and throughput bottlenecks |
+| **agentic-optimization** | Analyzes AI agent telemetry from Application Insights, including anomaly detection, trend analysis, and performance statistics |
+| **deep-analysis** | Cross-resource deep analysis of a specific distributed trace, correlating telemetry across multiple Application Insights resources |
 | **get-profile-hotpath** | Fetches and displays the hot path call tree from an Application Insights Profiler trace for method-level bottleneck analysis |
-| **download-profile-trace** | Downloads raw profiler trace files (.etl, .netperf) from the Application Insights Profiler dataplane API for offline analysis in PerfView or Visual Studio |
+| **download-profile-trace** | Downloads raw profiler trace files (.etl, .nettrace) from the Application Insights Profiler dataplane API for offline analysis in PerfView or Visual Studio |
+| **enable-profiler** | Guides users through enabling the Application Insights Profiler for .NET on their platform when profiler data is missing |
 
 ### Agent
 
@@ -54,8 +57,11 @@ copilot "Download a profiler trace from my App Insights resource"
 ├── plugin.json                                  # Plugin manifest
 ├── skills/
 │   ├── perf-optimization/SKILL.md               # Performance analysis & optimization skill
+│   ├── agentic-optimization/SKILL.md            # AI agent telemetry analysis skill
+│   ├── deep-analysis/SKILL.md                   # Cross-resource distributed trace analysis skill
 │   ├── get-profile-hotpath/SKILL.md             # Profiler hot path call tree skill
 │   ├── download-profile-trace/SKILL.md          # Trace file download skill
+│   ├── enable-profiler/SKILL.md                 # Profiler enablement guide skill
 │   └── shared/investigation-notes.md            # Shared investigation context template
 ├── agents/
 │   └── perf-optimizer.agent.md                  # Performance optimizer agent
