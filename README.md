@@ -40,6 +40,24 @@ copilot plugin install ./performance-optimization-copilot
 - [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) installed and logged in (`az login`)
 - An Azure subscription with Application Insights Profiler configured
 
+### Quick Install (Windows)
+
+```powershell
+# Install GitHub Copilot CLI
+winget install GitHub.CopilotCLI
+
+# Install Azure CLI
+winget install Microsoft.AzureCLI
+
+# Authenticate
+copilot auth login
+az login
+
+# Install this plugin
+copilot plugin install xiaomi7732/performance-optimization-copilot
+```
+- An Azure subscription with Application Insights Profiler configured
+
 ## Usage
 
 Once installed, the skills are automatically available in Copilot CLI conversations:
