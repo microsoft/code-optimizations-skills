@@ -2,6 +2,8 @@
 
 Executes the `aira.exe analyze` command to perform anomaly detection, trend analysis, and performance statistics on AI agent telemetry from Application Insights.
 
+Uses `-o json` to get the full structured output including operation IDs from anomaly spikes. The script post-processes the JSON to display a readable summary **and** extract operation IDs ready for deep-dive handoff — all in a single run.
+
 ## Parameters
 
 | Parameter | Required | Default | Description |
@@ -48,7 +50,7 @@ $cmdArgs = @(
   "-g", $resourceGroup
   "-c", $componentName
   "--access", $token
-  "-o", "summary"
+  "-o", "json"
 )
 
 if ($agentName) {
@@ -90,9 +92,104 @@ $exitCode = $LASTEXITCODE
 if ($exitCode -ne 0) {
   Write-Host "ERROR: aira.exe exited with code $exitCode"
   Write-Host $result
+  return
+}
+
+# Save raw JSON to working directory for user inspection
+$rawStr = $result -join "`n"
+$rawStr | Out-File -FilePath "aira-output.json" -Encoding utf8
+Write-Host "Raw JSON saved to aira-output.json"
+Write-Host ""
+
+# Parse and display structured summary
+$json = $rawStr | ConvertFrom-Json
+$summary = $json.summary
+
+Write-Host "=== SUMMARY ==="
+Write-Host "  Records: $($summary.totalRecords) | Agents: $($summary.uniqueAgents) | Operations: $($summary.uniqueOperations)"
+Write-Host "  Time range: $($summary.startTime) to $($summary.endTime)"
+Write-Host ""
+
+# Per-agent performance and anomaly extraction
+$allSpikes = @()
+
+foreach ($agentName in ($json.analysisResults | Get-Member -MemberType NoteProperty).Name) {
+  $agent = $json.analysisResults.$agentName
+  $dur = $agent.duration
+  $stats = $dur.statisticalSummary
+
+  Write-Host "=== AGENT: $agentName ==="
+  Write-Host ("  Calls: {0} | Mean: {1:N0}ms | Median: {2:N0}ms | P95: {3:N0}ms | Max: {4:N0}ms" -f $stats.count, $stats.mean, $stats.median, $stats.p95, $stats.max)
+
+  # Operation breakdown
+  $ops = $dur.operationDistributionResult.operationMetrics
+  if ($ops) {
+    Write-Host "  --- Operation Breakdown ---"
+    foreach ($opName in ($ops | Get-Member -MemberType NoteProperty).Name) {
+      $op = $ops.$opName
+      Write-Host ("    {0,-30} calls={1,-6} avg={2,8:N0}ms  max={3,8:N0}ms" -f $opName, $op.count, $op.avg, $op.max)
+      # Show tool breakdown if present
+      if ($op.byTool) {
+        foreach ($toolName in ($op.byTool | Get-Member -MemberType NoteProperty).Name) {
+          $tool = $op.byTool.$toolName
+          Write-Host ("      Tool: {0,-40} avg={1,8:N0}ms  max={2,8:N0}ms" -f $toolName, $tool.avg, $tool.max)
+        }
+      }
+    }
+  }
+
+  # Trend
+  $trend = $dur.trendResult
+  if ($trend -and $trend.confidence -ge 0.5) {
+    Write-Host ("  Trend: {0} (confidence={1:P0}, changeRate={2:P1})" -f $trend.trendDirection, $trend.confidence, $trend.changeRate)
+  }
+
+  # Collect anomaly spikes with operation IDs
+  foreach ($spike in $dur.anomalyResult.spikes) {
+    $ctx = $spike.context
+    $allSpikes += [PSCustomObject]@{
+      Agent       = $agentName
+      OperationId = $ctx.operationId
+      Operation   = $ctx.aiOperationName
+      Model       = $ctx.model
+      ResponseId  = $ctx.responseId
+      Duration    = [math]::Round($spike.value)
+      Severity    = [math]::Round($spike.severity, 2)
+    }
+  }
+
+  Write-Host ""
+}
+
+# Display anomaly spikes with operation IDs for deep-dive
+if ($allSpikes.Count -gt 0) {
+  # Deduplicate by operationId
+  $uniqueOps = $allSpikes | Group-Object -Property OperationId | ForEach-Object {
+    $group = $_.Group | Sort-Object -Property Duration -Descending
+    $top = $group[0]
+    [PSCustomObject]@{
+      OperationId = $top.OperationId
+      Agent       = $top.Agent
+      MaxDuration = $top.Duration
+      MaxSeverity = ($group | Measure-Object -Property Severity -Maximum).Maximum
+      SpanTypes   = ($group | ForEach-Object { $_.Operation }) -join ", "
+      Model       = ($group | Where-Object { $_.Model } | Select-Object -First 1).Model
+    }
+  } | Sort-Object -Property MaxDuration -Descending
+
+  Write-Host "=== ANOMALY OPERATIONS (ready for deep-dive) ==="
+  Write-Host ("{0,-5} {1,-36} {2,12} {3,10} {4,-30} {5}" -f "#", "Operation ID", "Duration(ms)", "Severity", "Span Types", "Model")
+  Write-Host ("-" * 110)
+
+  $i = 1
+  foreach ($op in $uniqueOps) {
+    Write-Host ("{0,-5} {1,-36} {2,12} {3,10} {4,-30} {5}" -f $i, $op.OperationId, $op.MaxDuration, $op.MaxSeverity, $op.SpanTypes, $op.Model)
+    $i++
+  }
 } else {
-  # Output the summary result for the agent to interpret
-  $result
+  Write-Host "=== ANOMALY OPERATIONS ==="
+  Write-Host "  No anomaly spikes with operation IDs detected."
+  Write-Host "  Tip: Widen the time range, increase --limit, or lower the anomaly threshold for more results."
 }
 ```
 
@@ -100,19 +197,21 @@ if ($exitCode -ne 0) {
 
 | Code | Meaning |
 |------|---------|
-| 0 | Success — results are returned (summary text or JSON depending on `-o` flag) |
+| 0 | Success — results are returned as JSON |
 | 1 | Validation error or no data found — check stderr for details and actionable guidance |
 | 2 | Unexpected error — the CLI encountered an internal failure |
 
 ### Reading the results
 
-With `-o summary` (default in this script), the CLI returns a pre-formatted text summary containing:
+The script outputs a structured summary extracted from the JSON result:
 
-- **Agent performance table** — All agents sorted by P95 duration, with call counts, latency stats, anomaly counts, and average token usage
-- **Anomalies** — High-severity spikes (severity ≥ 3.0) with operation context, model, and operation ID for drill-down
-- **Trends** — Notable trends (confidence ≥ 0.5) showing metric direction and change rate
+1. **Summary header** — Record count, agent count, operation count, time range
+2. **Per-agent performance** — Call count, mean/median/P95/max latency
+3. **Operation breakdown** — Per-operation-type stats (invoke_agent, chat, execute_tool) with tool-level detail
+4. **Trends** — Direction and confidence for notable trends
+5. **Anomaly operations table** — Deduplicated list of operation IDs from anomaly spikes, sorted by duration, ready for deep-dive handoff
 
-Present this summary directly to the user. For raw JSON data (e.g., for follow-up queries), re-run with `-o json`.
+The raw JSON is also saved to `aira-output.json` in the working directory for the user to inspect.
 
 ### No results?
 
