@@ -22,8 +22,10 @@ $correlationId = [guid]::NewGuid().ToString()
 
 All HTTP requests must include a `User-Agent` header to identify this plugin. See [user-agent.md](user-agent.md) for the full convention.
 
+Read `version` and `commit` from `plugin.json` (at the repository root) and construct the agent string:
+
 ```powershell
-$userAgent = "perf-copilot/0.1.0 (commit:9c4d3f5)"
+$userAgent = "perf-copilot/$version (commit:$commit)"
 ```
 
 ## Standard headers

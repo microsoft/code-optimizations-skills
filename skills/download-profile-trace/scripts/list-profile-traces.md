@@ -30,7 +30,7 @@ GET https://dataplane.diagnosticservices.azure.com/api/apps/{appId}/artifacts/in
 $appId = "<APP_ID>"
 $timeSpan = "P7D"
 $correlationId = [guid]::NewGuid().ToString()
-$userAgent = "perf-copilot/0.1.0 (commit:9c4d3f5)"
+# $userAgent — construct from plugin.json version and commit fields. See skills/shared/user-agent.md
 
 # Always re-acquire the token in the same command block to avoid cross-session variable scoping issues
 $token = (az account get-access-token --resource "api://dataplane.diagnosticservices.azure.com" --query accessToken -o tsv)

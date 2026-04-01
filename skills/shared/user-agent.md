@@ -8,21 +8,16 @@ All HTTP requests made by this plugin must include a `User-Agent` header to iden
 perf-copilot/{version} (commit:{commitHash})
 ```
 
-- **version** — from `plugin.json` → `"version"`
-- **commitHash** — from `plugin.json` → `"commit"` (short SHA of the last release commit)
-
-Example:
-
-```
-perf-copilot/0.1.0 (commit:9c4d3f5)
-```
+Both values come from `plugin.json` at the repository root:
+- **version** → `"version"` field
+- **commitHash** → `"commit"` field
 
 ## Usage in PowerShell scripts
 
-Define the user agent string at the top of each script block and include it in every header dictionary:
+Read `version` and `commit` from `plugin.json` to construct the agent string. Include it in every header dictionary:
 
 ```powershell
-$userAgent = "perf-copilot/0.1.0 (commit:9c4d3f5)"
+$userAgent = "perf-copilot/$version (commit:$commit)"
 
 $headers = @{
     "Authorization" = "Bearer $token"
@@ -31,6 +26,8 @@ $headers = @{
 }
 ```
 
+**Do not hardcode the version or commit hash in script files.** Always read them from `plugin.json` so there is a single source of truth.
+
 ## Maintenance
 
-When releasing a new version, update both `version` and `commit` in `plugin.json`. Then update all script templates in `skills/` to reflect the new user agent string.
+Before a release, run `scripts/Update-CommitHash.ps1` to stamp the current HEAD commit into `plugin.json`.

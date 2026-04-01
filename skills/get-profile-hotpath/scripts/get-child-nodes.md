@@ -30,7 +30,7 @@ $traceLocationId = "<TRACE_LOCATION_ID>"
 $redisCacheRegion = "<REDIS_CACHE_REGION>"
 $showFramework = "false"
 $correlationId = [guid]::NewGuid().ToString()
-$userAgent = "perf-copilot/0.1.0 (commit:9c4d3f5)"
+# $userAgent — construct from plugin.json version and commit fields. See skills/shared/user-agent.md
 
 # pendingIndices: array of node index strings to fetch, e.g. @("32", "33", "34")
 $pendingIndices = @("<INDEX1>", "<INDEX2>")

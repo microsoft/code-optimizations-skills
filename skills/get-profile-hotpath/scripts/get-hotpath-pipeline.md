@@ -21,7 +21,7 @@ $showFramework = "false"
 
 # --- Step 1: Acquire token ---
 $token = (az account get-access-token --resource "api://dataplane.diagnosticservices.azure.com" --query accessToken -o tsv)
-$userAgent = "perf-copilot/0.1.0 (commit:9c4d3f5)"
+# $userAgent — construct from plugin.json version and commit fields. See skills/shared/user-agent.md
 $headers = @{
     "Authorization" = "Bearer $token"
     "x-ms-client-request-id" = [guid]::NewGuid().ToString()

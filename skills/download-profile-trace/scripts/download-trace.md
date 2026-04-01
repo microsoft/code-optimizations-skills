@@ -28,7 +28,7 @@ $artifactId = "<ARTIFACT_ID>"
 # Check the blobUri from the listing to determine the correct file extension (.etl, .etl.zip, .netperf)
 $outputPath = "<OUTPUT_FILE_PATH>"
 $correlationId = [guid]::NewGuid().ToString()
-$userAgent = "perf-copilot/0.1.0 (commit:9c4d3f5)"
+# $userAgent — construct from plugin.json version and commit fields. See skills/shared/user-agent.md
 
 # Always re-acquire the token in the same command block to avoid cross-session variable scoping issues
 $token = (az account get-access-token --resource "api://dataplane.diagnosticservices.azure.com" --query accessToken -o tsv)

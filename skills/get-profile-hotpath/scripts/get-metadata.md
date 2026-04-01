@@ -21,7 +21,7 @@ GET https://dataplane.diagnosticservices.azure.com/api/apps/{appId}/profileTreeM
 ```powershell
 $appId = "<APP_ID>"
 $correlationId = [guid]::NewGuid().ToString()
-$userAgent = "perf-copilot/0.1.0 (commit:9c4d3f5)"
+# $userAgent — construct from plugin.json version and commit fields. See skills/shared/user-agent.md
 
 $metadataResponse = Invoke-RestMethod `
   -Uri "https://dataplane.diagnosticservices.azure.com/api/apps/$appId/profileTreeMetadata?api-version=2024-03-06-preview" `
