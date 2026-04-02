@@ -27,11 +27,11 @@ A [GitHub Copilot CLI](https://docs.github.com/en/copilot/github-copilot-in-the-
 
 ```bash
 # Install from GitHub
-copilot plugin install xiaomi7732/performance-optimization-copilot
+copilot plugin install microsoft/code-optimizations-skills
 
 # Or install from a local clone
-git clone https://github.com/xiaomi7732/performance-optimization-copilot.git
-copilot plugin install ./performance-optimization-copilot
+git clone https://github.com/microsoft/code-optimizations-skills.git
+copilot plugin install ./code-optimizations-skills
 ```
 
 ## Prerequisites
@@ -54,7 +54,7 @@ copilot auth login
 az login
 
 # Install this plugin
-copilot plugin install xiaomi7732/performance-optimization-copilot
+copilot plugin install microsoft/code-optimizations-skills
 ```
 
 ## Usage
