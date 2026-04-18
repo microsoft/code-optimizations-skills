@@ -16,6 +16,8 @@ GET https://dataplane.diagnosticservices.azure.com/api/apps/{appId}/artifacts/in
 | `x-ms-client-request-id` | A new GUID for correlation |
 | `User-Agent` | `perf-copilot/{version} (commit:{hash})` — see [user-agent.md](../../shared/user-agent.md) |
 
+### Query parameters
+
 | Parameter | Required | Description |
 |---|---|---|
 | `artifactKind` | Yes | Set to `Dump` to list snapshot dumps |

@@ -49,7 +49,7 @@ $debugInfo = Invoke-RestMethod `
     "User-Agent" = $userAgent
   }
 
-Write-Host "Exception: $($debugInfo.exceptionInfo.Description)"
+Write-Host "Exception: $($debugInfo.exceptionInfo.Id) — $($debugInfo.exceptionInfo.Description)"
 Write-Host "Stack frames: $($debugInfo.stackFrames.Count)"
 
 # Output the full JSON for parsing

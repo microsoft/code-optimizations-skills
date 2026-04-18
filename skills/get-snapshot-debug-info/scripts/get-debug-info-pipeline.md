@@ -149,6 +149,11 @@ if (-not $skipPoll) {
         Start-Sleep -Seconds $delaySeconds
     }
 
+    if ($i -gt $maxAttempts) {
+        Write-Error "Polling timed out after $maxAttempts attempts. The computation may still be running — wait and retry, or re-trigger."
+        return
+    }
+
     # --- Step 5: Fetch debug info ---
     $debugInfo = Invoke-RestMethod `
       -Uri "https://dataplane.diagnosticservices.azure.com/api/apps/$appId/debugInfo?st=$stampId&sn=$snapshotId&t=$encodedTimestamp&r=$redisCacheRegion&api-version=2025-03-19-preview" `

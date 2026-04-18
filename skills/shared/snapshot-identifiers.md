@@ -41,7 +41,7 @@ v2|westus2-ey2ahqc2dsyvq|d40e2d66-4e93-47c2-881e-71a758e09f54|Dump|a075ba6a3c054
 
 When using the `GET /api/apps/{appId}/artifacts/ingested?artifactKind=Dump` endpoint:
 
-- **snapshotId**: Use the `artifactId` field directly (this is the snapshot GUID, without dashes — e.g., `0185cc9fd902434190dcc01ed8e2d7cd`)
+- **snapshotId**: Use the `artifactId` field from the selected artifact. The listing may return GUIDs with dashes (e.g., `0185cc9f-d902-4341-90dc-c01ed8e2d7cd`) — strip dashes to get the compact format expected by the debug info API (e.g., `0185cc9fd902434190dcc01ed8e2d7cd`).
 - **snapshotTimestamp**: Use the `triggerTime` field (when the snapshot was captured)
 - **stampId**: **Not directly available in the listing response.** Must be extracted from exception telemetry — see below.
 

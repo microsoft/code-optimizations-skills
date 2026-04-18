@@ -92,6 +92,11 @@ for ($i = 1; $i -le $maxAttempts; $i++) {
     if ($status.status -eq "Failed") { Write-Error "Debug info computation failed."; return }
     Start-Sleep -Seconds $delaySeconds
 }
+
+if ($i -gt $maxAttempts) {
+    Write-Error "Polling timed out after $maxAttempts attempts. The computation may still be running — wait and retry, or re-trigger."
+    return
+}
 ```
 
 ## Response
