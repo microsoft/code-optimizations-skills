@@ -89,7 +89,8 @@ if ($skipPoll) {
 } elseif ($triggerResponse.StatusCode -eq 202) {
     Write-Host "Computation triggered (202). Polling for completion..."
 } else {
-    Write-Host "Trigger returned status: $($triggerResponse.StatusCode)"
+    Write-Error "Trigger returned unexpected status: $($triggerResponse.StatusCode). Check input parameters and permissions."
+    return
 }
 
 # --- Step 4: Poll for completion (if needed) ---
@@ -134,6 +135,11 @@ if (-not $skipPoll) {
             }
             Write-Host "Poll $i - Computation complete (302 redirect)."
             break
+        }
+
+        if ($pollResponse.StatusCode -eq 404) {
+            Write-Error "Poll $i - Job not found (404). The computation may not have been triggered, or identifiers are incorrect. Re-trigger the computation."
+            return
         }
 
         if ($pollResponse.StatusCode -ne 200) {
@@ -259,7 +265,7 @@ Write-Host "To inspect a specific framework frame's variables, re-run with its v
 - The script uses `try-catch` for 302 redirect handling during trigger and polling, as PowerShell throws exceptions on 302 even with `-SkipHttpErrorCheck` when `-MaximumRedirection 0` is set. See [302-redirect-handling.md](../../shared/302-redirect-handling.md) for details on this pattern.
 - Token is acquired once at the start. For snapshots that take >60 minutes to process, the token may expire — the polling loop handles 401 by refreshing.
 - Variables are only auto-fetched for **user code frames** (those with a `File` property indicating source info). Framework/runtime frames are listed with their method names but their variables are skipped to reduce noise and API calls. This mirrors how the profiler hot path skill only expands nodes along the hot path.
-- Variables are fetched per-frame (not batched globally) because the `/variables` API returns variables positionally — the `id` field in the response is not a unique global identifier.
+- Variables are fetched per-frame (not batched globally) because each frame's variable indices are relative to that frame's scope. While the `id` field in the response matches the requested index, indices from different frames may overlap, so batching across frames would conflate unrelated variables.
 - Child variable expansion is capped at 10 children per variable to avoid overwhelming output.
 - The user can request variable expansion for specific framework frames if needed — use the [get-variables.md](get-variables.md) script with the frame's variable indices.
 - The output shows each stack frame with its variables indented beneath it. Child variables are shown with a `+--` prefix.

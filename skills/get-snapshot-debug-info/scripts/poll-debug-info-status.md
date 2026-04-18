@@ -80,6 +80,11 @@ for ($i = 1; $i -le $maxAttempts; $i++) {
         break
     }
 
+    if ($pollResponse.StatusCode -eq 404) {
+        Write-Error "Poll $i - Job not found (404). The computation may not have been triggered, or identifiers are incorrect. Re-trigger the computation."
+        return
+    }
+
     if ($pollResponse.StatusCode -ne 200) {
         Write-Host "Poll $i - Status: $($pollResponse.StatusCode)"
         Start-Sleep -Seconds $delaySeconds
