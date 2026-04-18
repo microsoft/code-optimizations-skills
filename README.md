@@ -17,7 +17,10 @@ A [GitHub Copilot CLI](https://docs.github.com/en/copilot/github-copilot-in-the-
 | **deep-analysis** | Cross-resource deep analysis of a specific distributed trace, correlating telemetry across multiple Application Insights resources |
 | **get-profile-hotpath** | Fetches and displays the hot path call tree from an Application Insights Profiler trace for method-level bottleneck analysis |
 | **download-profile-trace** | Downloads raw profiler trace files (.etl, .nettrace) from the Application Insights Profiler dataplane API for offline analysis in PerfView or Visual Studio |
+| **download-snapshot** | Downloads snapshot dump files (.dmp) from the Application Insights Snapshot Debugger dataplane API for offline exception analysis in Visual Studio or WinDbg |
+| **get-snapshot-debug-info** | Fetches exception details, call stacks, and variable values from a Snapshot Debugger snapshot for method-level root-cause analysis |
 | **enable-profiler** | Guides users through enabling the Application Insights Profiler for .NET on their platform when profiler data is missing |
+| **enable-snapshot-debugger** | Guides users through enabling the Application Insights Snapshot Debugger for .NET on their platform when snapshot data is missing |
 
 ### Agent
 
@@ -38,7 +41,7 @@ copilot plugin install ./performance-optimization-copilot
 
 - [GitHub Copilot CLI](https://docs.github.com/en/copilot/github-copilot-in-the-cli) installed and authenticated
 - [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) installed and logged in (`az login`)
-- An Azure subscription with Application Insights Profiler configured
+- An Azure subscription with Application Insights configured (Profiler for performance analysis, Snapshot Debugger for exception debugging)
 
 ### Quick Install (Windows)
 
@@ -56,7 +59,6 @@ az login
 # Install this plugin
 copilot plugin install xiaomi7732/performance-optimization-copilot
 ```
-- An Azure subscription with Application Insights Profiler configured
 
 ## Usage
 
@@ -75,6 +77,15 @@ copilot "Download a profiler trace from my App Insights resource"
 # Enable the profiler on your app
 copilot "Help me enable the Application Insights Profiler"
 
+# Download a snapshot for offline debugging
+copilot "Download a snapshot dump from my App Insights resource"
+
+# Inspect exception details from a snapshot
+copilot "Show me the exception, call stack and relevant variables from my latest snapshot"
+
+# Enable the Snapshot Debugger on your app
+copilot "Help me enable the Snapshot Debugger"
+
 # Analyze AI agent performance
 copilot "Analyze my AI agent telemetry for anomalies"
 
@@ -92,7 +103,10 @@ copilot "Do a deep analysis of operation ID abc-123"
 │   ├── deep-analysis/SKILL.md                   # Cross-resource distributed trace analysis skill
 │   ├── get-profile-hotpath/SKILL.md             # Profiler hot path call tree skill
 │   ├── download-profile-trace/SKILL.md          # Trace file download skill
+│   ├── download-snapshot/SKILL.md               # Snapshot dump download skill
+│   ├── get-snapshot-debug-info/SKILL.md         # Snapshot exception inspection skill
 │   ├── enable-profiler/SKILL.md                 # Profiler enablement guide skill
+│   ├── enable-snapshot-debugger/SKILL.md        # Snapshot Debugger enablement guide skill
 │   └── shared/investigation-notes.md            # Shared investigation context template
 ├── agents/
 │   └── perf-optimizer.agent.md                  # Performance optimizer agent
