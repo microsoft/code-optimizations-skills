@@ -75,7 +75,7 @@ if ($LASTEXITCODE -eq 0 -and $result1) {
 # --- Tier 2: Check for collector heartbeat ---
 $query2 = "customEvents | where timestamp > ago(${lookbackDays}d) | where name == 'AppInsightsSnapshotCollectorLogs' | extend eventName = tostring(customDimensions.EventName) | where eventName == 'Heartbeat' | summarize HeartbeatCount = count(), LastHeartbeat = max(timestamp), TrackExceptionCalls = sum(toint(customMeasurements.TrackExceptionCalls)), FirstChanceExceptions = sum(toint(customMeasurements.FirstChanceExceptions))"
 
-$result2 = az monitor app-insights query --apps "$resourceId" --analytics-query "$query2" --offset $offset --output json 2>&1
+$result2 = az monitor app-insights query --apps "$resourceId" --analytics-query "$query2" --offset $offset --output json 2>$null
 $heartbeatCount = 0
 $lastHeartbeat = $null
 $trackExceptionCalls = 0
@@ -91,7 +91,9 @@ if ($LASTEXITCODE -eq 0 -and $result2) {
             $trackExceptionCalls = $hbRows[0][2]
             $firstChanceExceptions = $hbRows[0][3]
         }
-    } catch { }
+    } catch {
+        Write-Host "Warning: Failed to parse heartbeat query response."
+    }
 }
 
 # --- Interpret results ---

@@ -89,4 +89,4 @@ $encodedTimestamp = [System.Uri]::EscapeDataString($snapshotTimestamp)
 # "2026-03-20T21:55:35.9066175Z" → "2026-03-20T21%3A55%3A35.9066175Z"
 ```
 
-The `stampId` and `snapshotId` typically do not require URL encoding (they contain only alphanumeric characters, dashes, and hyphens).
+The `stampId` and `snapshotId` typically do not require URL encoding (they contain only alphanumeric characters and hyphens).
