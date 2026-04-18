@@ -51,7 +51,7 @@ Write-Host "Found $($response.Count) snapshot(s)."
 $query = "exceptions | where timestamp > ago(${lookbackDays}d) | where customDimensions has 'ai.snapshot.id' | extend snapshotId = tostring(customDimensions['ai.snapshot.id']), stampId = tostring(customDimensions['ai.snapshot.stampid']) | project snapshotId, stampId, type, outerMessage"
 
 $exResult = $null
-$exRaw = az monitor app-insights query --app $appId --analytics-query $query --offset $offset --output json 2>$null
+$exRaw = az monitor app-insights query --apps $appId --analytics-query $query --offset $offset --output json 2>$null
 if ($exRaw) {
     try { $exResult = $exRaw | ConvertFrom-Json } catch { $exResult = $null }
 }
@@ -100,7 +100,7 @@ If the `stampId` is not found in `$exMap` (the exception telemetry query didn't 
 ```powershell
 $query = "exceptions | where customDimensions has 'ai.snapshot.id' | extend sid = tostring(customDimensions['ai.snapshot.id']), stampId = tostring(customDimensions['ai.snapshot.stampid']) | where sid == '$snapshotId' | project stampId | take 1"
 
-$result = az monitor app-insights query --app $appId --analytics-query $query --offset $timeSpan --output json | ConvertFrom-Json
+$result = az monitor app-insights query --apps $appId --analytics-query $query --offset $timeSpan --output json | ConvertFrom-Json
 $stampId = $result.tables[0].rows[0][0]
 Write-Host "StampId: $stampId"
 ```

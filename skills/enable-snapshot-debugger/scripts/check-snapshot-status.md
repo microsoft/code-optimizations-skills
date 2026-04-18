@@ -19,8 +19,7 @@ A heartbeat can exist **without** any snapshot-tagged exceptions — this means 
 exceptions
 | where timestamp > ago(7d)
 | where customDimensions has 'ai.snapshot.id'
-| extend snapshotId = tostring(customDimensions['ai.snapshot.id']),
-         stampId = tostring(customDimensions['ai.snapshot.stampid'])
+| extend snapshotId = tostring(customDimensions['ai.snapshot.id'])
 | summarize SnapshotCount = count(),
             LastSnapshot = max(timestamp),
             UniqueExceptions = dcount(type)
