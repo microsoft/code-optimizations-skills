@@ -108,6 +108,11 @@ if (-not $skipPoll) {
             } -MaximumRedirection 0 -SkipHttpErrorCheck
         } catch {
             if ($_.Exception.Response.StatusCode -eq 302 -or $_.Exception.Response.StatusCode.value__ -eq 302) {
+                $location = $_.Exception.Response.Headers.Location
+                if ($location -match "debugInfoComputeErrors") {
+                    Write-Error "Poll $i - Computation failed (302 redirect to errors endpoint: $location)."
+                    return
+                }
                 Write-Host "Poll $i - Computation complete (302)."
                 break
             }
@@ -122,6 +127,11 @@ if (-not $skipPoll) {
         }
 
         if ($pollResponse.StatusCode -eq 302) {
+            $location = $pollResponse.Headers['Location']
+            if ($location -match "debugInfoComputeErrors") {
+                Write-Error "Poll $i - Computation failed (302 redirect to errors endpoint: $location)."
+                return
+            }
             Write-Host "Poll $i - Computation complete (302 redirect)."
             break
         }

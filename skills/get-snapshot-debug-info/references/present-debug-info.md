@@ -32,7 +32,7 @@ Example output:
 
 ```
 === Snapshot Debug Info ===
-Exception: System.NullReferenceException (Code: 0xC0000005)
+Exception: System.NullReferenceException (Code: 0x80004003)
 Description: Object reference not set to an instance of an object.
 
 === Call Stack ===

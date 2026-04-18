@@ -5,7 +5,7 @@ Poll the `debugInfoComputeStatus` endpoint until the debug info computation comp
 ## Request
 
 ```
-GET https://dataplane.diagnosticservices.azure.com/api/apps/{appId}/debugInfoComputeStatus?st={stampId}&sn={snapshotId}&t={snapshotTimestamp}&r={redisCacheEnvironment}&api-version=2025-03-19-preview
+GET https://dataplane.diagnosticservices.azure.com/api/apps/{appId}/debugInfoComputeStatus?st={stampId}&sn={snapshotId}&t={snapshotTimestamp}&r={redisCacheRegion}&api-version=2025-03-19-preview
 ```
 
 ### Query parameters
@@ -15,7 +15,7 @@ GET https://dataplane.diagnosticservices.azure.com/api/apps/{appId}/debugInfoCom
 | StampId | `st` | Azure stamp identifier |
 | SnapshotId | `sn` | Snapshot GUID |
 | SnapshotTimestamp | `t` | Snapshot capture timestamp (URL-encoded) |
-| RedisCacheEnvironment | `r` | Redis cache region from metadata |
+| RedisCacheRegion | `r` | Redis cache region from metadata |
 
 ### Headers
 
@@ -49,6 +49,11 @@ for ($i = 1; $i -le $maxAttempts; $i++) {
         } -MaximumRedirection 0 -SkipHttpErrorCheck
     } catch {
         if ($_.Exception.Response.StatusCode -eq 302 -or $_.Exception.Response.StatusCode.value__ -eq 302) {
+            $location = $_.Exception.Response.Headers.Location
+            if ($location -match "debugInfoComputeErrors") {
+                Write-Error "Poll $i - Computation failed (302 redirect to errors endpoint: $location)."
+                return
+            }
             Write-Host "Poll $i - Computation complete (302)."
             break
         }
@@ -63,6 +68,11 @@ for ($i = 1; $i -le $maxAttempts; $i++) {
     }
 
     if ($pollResponse.StatusCode -eq 302) {
+        $location = $pollResponse.Headers['Location']
+        if ($location -match "debugInfoComputeErrors") {
+            Write-Error "Poll $i - Computation failed (302 redirect to errors endpoint: $location)."
+            return
+        }
         Write-Host "Poll $i - Computation complete (302 redirect)."
         break
     }

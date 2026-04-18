@@ -26,7 +26,9 @@ This script does two things in one block:
 
 ```powershell
 $appId = "<APP_ID>"
-$timeSpan = "P7D"
+$lookbackDays = 7
+$timeSpan = "P${lookbackDays}D"
+$offset = if ($lookbackDays -le 1) { "P1D" } elseif ($lookbackDays -le 7) { "P7D" } else { "P30D" }
 $correlationId = [guid]::NewGuid().ToString()
 # $userAgent — construct from plugin.json version and commit fields. See skills/shared/user-agent.md
 
@@ -46,9 +48,9 @@ $response = Invoke-RestMethod `
 Write-Host "Found $($response.Count) snapshot(s)."
 
 # --- Step 2: Query exception telemetry for snapshot metadata (type + stampId) ---
-$query = "exceptions | where timestamp > ago($timeSpan) | where customDimensions has 'ai.snapshot.id' | extend snapshotId = tostring(customDimensions['ai.snapshot.id']), stampId = tostring(customDimensions['ai.snapshot.stampid']) | project snapshotId, stampId, type, outerMessage"
+$query = "exceptions | where timestamp > ago(${lookbackDays}d) | where customDimensions has 'ai.snapshot.id' | extend snapshotId = tostring(customDimensions['ai.snapshot.id']), stampId = tostring(customDimensions['ai.snapshot.stampid']) | project snapshotId, stampId, type, outerMessage"
 
-$exResult = az monitor app-insights query --app $appId --analytics-query $query --offset $timeSpan --output json 2>$null | ConvertFrom-Json
+$exResult = az monitor app-insights query --app $appId --analytics-query $query --offset $offset --output json 2>$null | ConvertFrom-Json
 $exMap = @{}
 if ($exResult.tables[0].rows) {
     foreach ($row in $exResult.tables[0].rows) {

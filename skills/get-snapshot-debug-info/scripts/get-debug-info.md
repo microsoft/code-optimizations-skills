@@ -5,7 +5,7 @@ Fetch the computed debug info (exception information and call stack frames) from
 ## Request
 
 ```
-GET https://dataplane.diagnosticservices.azure.com/api/apps/{appId}/debugInfo?st={stampId}&sn={snapshotId}&t={snapshotTimestamp}&r={redisCacheEnvironment}&api-version=2025-03-19-preview
+GET https://dataplane.diagnosticservices.azure.com/api/apps/{appId}/debugInfo?st={stampId}&sn={snapshotId}&t={snapshotTimestamp}&r={redisCacheRegion}&api-version=2025-03-19-preview
 ```
 
 ### Query parameters
@@ -15,7 +15,7 @@ GET https://dataplane.diagnosticservices.azure.com/api/apps/{appId}/debugInfo?st
 | StampId | `st` | Azure stamp identifier |
 | SnapshotId | `sn` | Snapshot GUID |
 | SnapshotTimestamp | `t` | Snapshot capture timestamp (URL-encoded) |
-| RedisCacheEnvironment | `r` | Redis cache region from metadata |
+| RedisCacheRegion | `r` | Redis cache region from metadata |
 
 ### Headers
 
@@ -61,8 +61,8 @@ The response is a `DebugInfo` object:
 {
   "exceptionInfo": {
     "Code": 3221225477,
-    "Description": "Object reference not set to an instance of an object.",
-    "Id": "System.NullReferenceException"
+    "Description": "Attempted to read or write protected memory. This is often an indication that other memory is corrupt.",
+    "Id": "System.AccessViolationException"
   },
   "stackFrames": [
     {

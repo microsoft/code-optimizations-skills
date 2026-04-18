@@ -45,6 +45,9 @@ $body = @{
     redisCacheRegion = $redisCacheRegion
 } | ConvertTo-Json
 
+$skipPoll = $false
+$debugInfo = $null
+
 try {
     $triggerResponse = Invoke-WebRequest `
       -Uri "https://dataplane.diagnosticservices.azure.com/api/apps/$appId/debugInfo?api-version=2025-03-19-preview" `
@@ -65,12 +68,15 @@ try {
             "User-Agent" = $userAgent
         }
         Write-Host "Debug info retrieved from cache."
+        $skipPoll = $true
     } else {
         throw
     }
 }
 
-if ($triggerResponse.StatusCode -eq 302) {
+if ($skipPoll) {
+    # 302 was already handled in the catch block
+} elseif ($triggerResponse.StatusCode -eq 302) {
     $redirectUrl = "https://dataplane.diagnosticservices.azure.com$($triggerResponse.Headers['Location'])"
     Write-Host "Debug info cached. Following redirect..."
     $debugInfo = Invoke-RestMethod -Uri $redirectUrl -Method GET -Headers @{
@@ -79,6 +85,7 @@ if ($triggerResponse.StatusCode -eq 302) {
         "User-Agent" = $userAgent
     }
     Write-Host "Debug info retrieved from cache."
+    $skipPoll = $true
 } elseif ($triggerResponse.StatusCode -eq 202) {
     Write-Host "Computation triggered (202). Proceed to poll for completion."
 } else {

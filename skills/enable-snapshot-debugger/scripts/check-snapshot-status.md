@@ -46,7 +46,7 @@ customEvents
 
 | Parameter | Default | Description |
 |---|---|---|
-| `resourceId` | — | Application Insights resource ID (full ARM path) or app ID (GUID). |
+| `resourceId` | — | Application Insights resource ID (full ARM path) or app ID (GUID). The `--apps` parameter in `az monitor app-insights query` accepts either format. |
 | `lookbackDays` | `7` | How many days to look back. Use `30` for a wider check. |
 
 ## Script
@@ -54,7 +54,7 @@ customEvents
 > ⚠️ Read [az CLI query pitfalls](../../shared/az-cli-query-pitfalls.md) before modifying this script.
 
 ```powershell
-$resourceId = "<RESOURCE_ID>"
+$resourceId = "<RESOURCE_ID_OR_APP_ID>"
 $lookbackDays = 7
 $offset = if ($lookbackDays -le 1) { "P1D" } elseif ($lookbackDays -le 7) { "P7D" } else { "P30D" }
 
