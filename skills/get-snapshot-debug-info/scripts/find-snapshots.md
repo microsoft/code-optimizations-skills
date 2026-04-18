@@ -50,9 +50,13 @@ Write-Host "Found $($response.Count) snapshot(s)."
 # --- Step 2: Query exception telemetry for snapshot metadata (type + stampId) ---
 $query = "exceptions | where timestamp > ago(${lookbackDays}d) | where customDimensions has 'ai.snapshot.id' | extend snapshotId = tostring(customDimensions['ai.snapshot.id']), stampId = tostring(customDimensions['ai.snapshot.stampid']) | project snapshotId, stampId, type, outerMessage"
 
-$exResult = az monitor app-insights query --app $appId --analytics-query $query --offset $offset --output json 2>$null | ConvertFrom-Json
+$exResult = $null
+$exRaw = az monitor app-insights query --app $appId --analytics-query $query --offset $offset --output json 2>$null
+if ($exRaw) {
+    try { $exResult = $exRaw | ConvertFrom-Json } catch { $exResult = $null }
+}
 $exMap = @{}
-if ($exResult.tables[0].rows) {
+if ($exResult -and $exResult.tables[0].rows) {
     foreach ($row in $exResult.tables[0].rows) {
         $exMap[$row[0]] = @{ stampId = $row[1]; type = $row[2]; message = $row[3] }
     }

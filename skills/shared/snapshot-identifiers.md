@@ -70,7 +70,7 @@ $timeSpan = "P7D"
 
 $query = "exceptions | where customDimensions has 'ai.snapshot.id' | extend snapshotId = tostring(customDimensions['ai.snapshot.id']), stampId = tostring(customDimensions['ai.snapshot.stampid']) | project timestamp, snapshotId, stampId, type, outerMessage | order by timestamp desc | take 10"
 
-$result = az monitor app-insights query --app $appId --analytics-query $query --offset $timeSpan --output json | ConvertFrom-Json
+$result = az monitor app-insights query --apps $resourceId --analytics-query $query --offset $timeSpan --output json | ConvertFrom-Json
 $result.tables[0].rows | ForEach-Object {
     Write-Host "Time: $($_[0]) | SnapshotId: $($_[1]) | StampId: $($_[2]) | Exception: $($_[3])"
 }

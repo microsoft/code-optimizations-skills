@@ -23,6 +23,9 @@ $appId = "<APP_ID>"
 $correlationId = [guid]::NewGuid().ToString()
 # $userAgent — construct from plugin.json version and commit fields. See skills/shared/user-agent.md
 
+# Re-acquire token in the same command block — see skills/shared/get-access-token.md
+$token = (az account get-access-token --resource "api://dataplane.diagnosticservices.azure.com" --query accessToken -o tsv)
+
 $metadataResponse = Invoke-RestMethod `
   -Uri "https://dataplane.diagnosticservices.azure.com/api/apps/$appId/snapshotDebuggerMetadata?api-version=2025-03-19-preview" `
   -Method GET `

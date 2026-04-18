@@ -65,7 +65,7 @@ $result1 = az monitor app-insights query --apps "$resourceId" --analytics-query 
 $snapshotRows = $null
 $totalSnapshots = 0
 
-if ($result1 -and $result1 -notmatch "ERROR") {
+if ($LASTEXITCODE -eq 0 -and $result1) {
     try {
         $parsed1 = $result1 | ConvertFrom-Json
         $snapshotRows = $parsed1.tables[0].rows
@@ -82,7 +82,7 @@ $lastHeartbeat = $null
 $trackExceptionCalls = 0
 $firstChanceExceptions = 0
 
-if ($result2 -and $result2 -notmatch "ERROR") {
+if ($LASTEXITCODE -eq 0 -and $result2) {
     try {
         $parsed2 = $result2 | ConvertFrom-Json
         $hbRows = $parsed2.tables[0].rows

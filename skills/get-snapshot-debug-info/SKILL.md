@@ -73,7 +73,7 @@ Run the script in [get-variables.md](scripts/get-variables.md) to POST variable 
 
 </details>
 
-### 9. Present the debug info
+### 10. Present the debug info
 
 Once the debug info and variables are loaded, present the result using the format described in [present-debug-info.md](references/present-debug-info.md).
 
@@ -100,9 +100,9 @@ If you still see persistent 401s after the script update:
 
 If the `debugInfoComputeStatus` endpoint still returns `Running` after the polling loop exhausts all attempts (default: 45 attempts / ~90 seconds):
 
-1. **Wait and retry** — large snapshots take longer to process. Wait 30–60 seconds, then re-acquire a fresh token and try a direct GET on the `debugInfo` endpoint (step 7). If the computation completed in the background, the GET will return the result directly.
+1. **Wait and retry** — large snapshots take longer to process. Wait 30–60 seconds, then re-acquire a fresh token and try a direct GET on the `debugInfo` endpoint (step 8). If the computation completed in the background, the GET will return the result directly.
 2. **Try a different snapshot** — if the snapshot is unusually large or corrupted, try a different snapshot from the same time window.
-3. **Re-trigger the computation** — POST to the `debugInfo` endpoint again (step 5). If the computation completed, you'll get a 302 redirect to the cached result.
+3. **Re-trigger the computation** — POST to the `debugInfo` endpoint again (step 6). If the computation completed, you'll get a 302 redirect to the cached result.
 
 ### Computation returns "Failed"
 
