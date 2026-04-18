@@ -41,7 +41,7 @@ copilot plugin install ./performance-optimization-copilot
 
 - [GitHub Copilot CLI](https://docs.github.com/en/copilot/github-copilot-in-the-cli) installed and authenticated
 - [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) installed and logged in (`az login`)
-- An Azure subscription with Application Insights Profiler configured
+- An Azure subscription with Application Insights configured (Profiler for performance analysis, Snapshot Debugger for exception debugging)
 
 ### Quick Install (Windows)
 
@@ -59,7 +59,6 @@ az login
 # Install this plugin
 copilot plugin install xiaomi7732/performance-optimization-copilot
 ```
-- An Azure subscription with Application Insights Profiler configured
 
 ## Usage
 

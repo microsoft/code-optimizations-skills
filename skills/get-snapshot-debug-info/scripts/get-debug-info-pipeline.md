@@ -1,6 +1,6 @@
 # Get Debug Info Pipeline (Combined)
 
-A single-script alternative to running steps 3–7 individually. This script acquires a token, fetches metadata, triggers debug info computation, polls for completion, fetches the debug info (exception + call stack), and fetches variables for each stack frame — all in one PowerShell block.
+A single-script alternative to running steps 4–9 individually. This script acquires a token, fetches metadata, triggers debug info computation, polls for completion, fetches the debug info (exception + call stack), and fetches variables for each stack frame — all in one PowerShell block.
 
 Use this when you want to minimize tool calls. The individual scripts in this folder remain available for debugging or when you need finer control over each step.
 

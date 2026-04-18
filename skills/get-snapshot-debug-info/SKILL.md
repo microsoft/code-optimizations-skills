@@ -34,20 +34,20 @@ After the user selects a snapshot, **resolve the snapshot identifiers**:
 
 See [snapshot-identifiers.md](../shared/snapshot-identifiers.md) for the full format specification.
 
-### 4–8. Fetch the debug info (combined pipeline)
+### 4–9. Fetch the debug info (combined pipeline)
 
-For efficiency, use the combined pipeline script [get-debug-info-pipeline.md](scripts/get-debug-info-pipeline.md) which performs steps 4–8 in a single PowerShell block: token acquisition → metadata → trigger debug info computation → poll for completion → fetch debug info → fetch variables. This is the **preferred approach** — it reduces tool calls from 5–6 down to 1–2.
+For efficiency, use the combined pipeline script [get-debug-info-pipeline.md](scripts/get-debug-info-pipeline.md) which performs steps 4–9 in a single PowerShell block: token acquisition → metadata → trigger debug info computation → poll for completion → fetch debug info → fetch variables. This is the **preferred approach** — it reduces tool calls from 5–6 down to 1–2.
 
 > **User communication**: The debug info pipeline may take **1–2 minutes** for snapshots being processed for the first time (triggering computation, polling for completion, fetching variables). Before starting the pipeline, inform the user that this is a multi-step process and they should expect to wait. Provide periodic status updates based on the script's output (e.g., "Computation triggered, polling for completion...", "Fetching variables for 5 stack frames..."). If the snapshot was previously analyzed, cached results return in seconds.
 
 If you need finer control or want to debug individual steps, the granular scripts below remain available.
 
 <details>
-<summary>Individual steps (4–8) for debugging</summary>
+<summary>Individual steps (4–9) for debugging</summary>
 
 ### 4. Acquire an access token
 
-Run the script in [get-access-token.md](../shared/get-access-token.md) to acquire a Bearer token for the dataplane. See the **token freshness and session scoping** guidance in that document — re-acquire the token in the same command block as each API call. This is especially critical during the polling loop in step 5, which may run for over a minute.
+Run the script in [get-access-token.md](../shared/get-access-token.md) to acquire a Bearer token for the dataplane. See the **token freshness and session scoping** guidance in that document — re-acquire the token in the same command block as each API call. This is especially critical during the polling loop in step 7, which may run for over a minute.
 
 ### 5. Fetch the Redis cache region
 

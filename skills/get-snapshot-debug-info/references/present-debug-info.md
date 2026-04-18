@@ -59,8 +59,8 @@ To inspect a specific framework frame's variables, ask to expand frame [1] or [2
 2. **Stack frames**: Number with `[0]`, `[1]`, etc. Show method name, file, and line separated by ` — `.
 3. **User code frames** (with source file info): Show variables indented under the frame with `name (type) = value` format. These are the most relevant for root-cause analysis.
 4. **Framework frames** (no source file): List the method name but skip variable fetching. Show `(framework — N variables available, skipped)` to indicate variables exist but were not fetched. The user can request expansion of specific framework frames if needed.
-5. **Child variables**: Further indent with `└─` prefix for children (level 2).
-6. **No variables**: Show `(none)` for frames without captured variables.
+5. **Child variables**: Further indent with `+--` prefix for children (level 2).
+6. **No variables**: Show `(no variables)` for frames without captured variables.
 7. **Hex code**: Convert the exception code to hex for readability: `"0x" + [Convert]::ToString($code, 16).ToUpper()`.
 
 ### Summary

@@ -12,7 +12,7 @@ The Snapshot Debugger APIs require three identifiers to uniquely locate a snapsh
 | **snapshotId** | `sn` | GUID uniquely identifying the snapshot capture | `a075ba6a-3c05-4da8-9566-2a9c05def54a` |
 | **snapshotTimestamp** | `t` | ISO 8601 DateTime when the snapshot was captured | `2026-03-20T21:55:35.9066175Z` |
 
-These are passed as query parameters (`st`, `sn`, `t`) on GET requests, and in the JSON body on POST requests. When used in query parameters, URL-encode the `snapshotTimestamp` value (it contains colons and periods).
+These are passed as query parameters (`st`, `sn`, `t`) on GET requests, and in the JSON body on POST requests. When used in query parameters, URL-encode the `snapshotTimestamp` value (it contains colons which are reserved characters in URLs).
 
 ## v2 artifact location format
 
