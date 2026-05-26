@@ -29,12 +29,11 @@ A [GitHub Copilot CLI](https://docs.github.com/en/copilot/github-copilot-in-the-
 ## Installation
 
 ```bash
-# Install from GitHub
-copilot plugin install xiaomi7732/performance-optimization-copilot
+# Add the marketplace
+copilot plugin marketplace add xiaomi7732/performance-optimization-copilot
 
-# Or install from a local clone
-git clone https://github.com/xiaomi7732/performance-optimization-copilot.git
-copilot plugin install ./performance-optimization-copilot
+# Install from the marketplace
+copilot plugin install perf-copilot@xiaomi7732/performance-optimization-copilot
 ```
 
 ## Prerequisites
@@ -56,8 +55,9 @@ winget install Microsoft.AzureCLI
 copilot auth login
 az login
 
-# Install this plugin
-copilot plugin install xiaomi7732/performance-optimization-copilot
+# Add marketplace and install this plugin
+copilot plugin marketplace add xiaomi7732/performance-optimization-copilot
+copilot plugin install perf-copilot@xiaomi7732/performance-optimization-copilot
 ```
 
 ## Usage
