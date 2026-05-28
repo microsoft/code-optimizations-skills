@@ -12,7 +12,12 @@ The downloaded artifact is a raw profiler trace captured by Application Insights
 | ETL (zipped) | `.etl.zip` | A zipped ETL file. Common for traces from Linux containers. **Extract the `.zip` before opening.** |
 | NetPerf / NetTrace | `.netperf`, `.nettrace` | Cross-platform .NET trace format. Common for .NET on Linux containers (e.g., AKS). |
 
-The actual format depends on the platform where the profiled application runs. The `blobUri` from the trace listing reveals the real file extension (e.g., `.etl.zip`). The `format` field in the listing (e.g., `Netperf`, `Etl`) indicates the trace format but not the compression — always check the `blobUri` extension.
+The actual format depends on the platform where the profiled application runs. Derive the output file extension from **two** fields in the trace listing:
+
+1. **`format`** → determines the base extension: `Etl` → `.etl`, `Nettrace` → `.nettrace`, `Netperf` → `.netperf`
+2. **`blobUri`** → check only for `.zip` compression suffix
+
+> ⚠️ The `blobUri` extension can be misleading — it may show `.etl.zip` even when `format` is `Nettrace`. Always use `format` for the base extension and `blobUri` only to detect `.zip` compression.
 
 > **Tip**: If the downloaded file has a `.zip` extension, extract it first to get the raw trace file before opening in analysis tools.
 
