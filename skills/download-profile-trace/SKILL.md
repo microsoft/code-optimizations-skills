@@ -37,7 +37,7 @@ Present the results to the user with:
 - Role name
 - Role instance (machine/container name)
 - Artifact ID (note if null)
-- Format (Netperf or Etl)
+- Format (Etl, Nettrace, or Netperf)
 
 When constructing the output filename, derive the file extension from **two** fields:
 

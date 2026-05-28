@@ -65,7 +65,7 @@ The response is a JSON array of `IngestedArtifact` objects. Key fields:
 | `triggerTime` | When the profiling session was triggered (ISO 8601 UTC timestamp) |
 | `roleName` | The cloud role name (e.g., `web`, `worker`, app name) |
 | `roleInstance` | The machine/container instance that produced the trace |
-| `format` | Trace format: `Netperf` (Linux/.NET) or `Etl` (Windows) |
+| `format` | Trace format: `Etl` (Windows), `Nettrace` (Linux/.NET), or `Netperf` (Linux/.NET legacy) |
 | `blobUri` | Internal blob storage URI for the trace file |
 | `artifactKind` | Always `Profile` when filtered |
 | `trigger` | What triggered the profiling session |
