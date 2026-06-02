@@ -24,8 +24,10 @@ GET https://dataplane.diagnosticservices.azure.com/api/apps/{appId}/artifacts/{a
 $appId = "<APP_ID>"
 $artifactId = "<ARTIFACT_ID>"
 # Include the role name to avoid collisions when downloading from multiple resources,
-# e.g., "trace-slowcpu-win-app-2026-03-20T214135.etl.zip"
-# Check the blobUri from the listing to determine the correct file extension (.etl, .etl.zip, .netperf)
+# e.g., "trace-myapp-2026-03-20T214135.nettrace.zip"
+# Derive the base extension from the `format` field (Etl → .etl, Nettrace → .nettrace, Netperf → .netperf).
+# Check the blobUri only for .zip compression (append .zip if the URI ends in .zip).
+# Do NOT use the blobUri extension as-is — it may show .etl.zip even when format is Nettrace.
 $outputPath = "<OUTPUT_FILE_PATH>"
 $correlationId = [guid]::NewGuid().ToString()
 # $userAgent — construct from plugin.json version and commit fields. See skills/shared/user-agent.md

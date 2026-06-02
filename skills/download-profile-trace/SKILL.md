@@ -37,9 +37,16 @@ Present the results to the user with:
 - Role name
 - Role instance (machine/container name)
 - Artifact ID (note if null)
-- Format (Netperf or Etl)
+- Format (Etl, Nettrace, or Netperf)
 
-When constructing the output filename, use the `blobUri` from the selected trace to determine the correct file extension (e.g., `.etl`, `.etl.zip`, `.netperf`). Include the **role name** in the filename to avoid collisions when downloading traces from different resources into the same directory, e.g., `trace-slowcpu-win-app-2026-03-20T214135.etl.zip`.
+When constructing the output filename, derive the file extension from **two** fields:
+
+1. **`format`** → base extension: `Etl` → `.etl`, `Nettrace` → `.nettrace`, `Netperf` → `.netperf`
+2. **`blobUri`** → compression: if the URI ends in `.zip`, append `.zip` to the base extension
+
+> ⚠️ Do **not** use the `blobUri` extension as-is for the filename. The `blobUri` may show `.etl.zip` even when `format` is `Nettrace`, which would produce a misleading filename. Always use `format` for the base extension and `blobUri` only to detect `.zip` compression.
+
+Include the **role name** in the filename to avoid collisions when downloading traces from different resources into the same directory, e.g., `trace-myapp-2026-03-20T214135.nettrace.zip`.
 
 Let the user pick which trace to download. If there's only one result, confirm it with the user before proceeding.
 
