@@ -46,10 +46,10 @@ requests
 $resourceId = "<RESOURCE_ID>"
 $lookbackHours = 24  # Adjust: 1, 6, 24, 48, 168 (7 days), 720 (30 days)
 
-$halfLookback = [math]::Max(1, [math]::Floor($lookbackHours / 2))
+$halfLookbackMinutes = [math]::Max(1, [math]::Floor($lookbackHours * 60 / 2))
 
 # Build the KQL query as a single line to avoid here-string truncation issues.
-$query = "let lookback = ago(${lookbackHours}h); let midpoint = ago(${halfLookback}h); requests | where timestamp > lookback | where success == false or toint(resultCode) >= 400 | summarize FailedCount = count(), FirstHalfCount = countif(timestamp < midpoint), SecondHalfCount = countif(timestamp >= midpoint), AvgDurationMs = round(avg(duration), 1), P95DurationMs = round(percentile(duration, 95), 1), LastSeen = max(timestamp), SampleOperationId = take_any(operation_Id), SampleRequestId = take_any(id) by name, resultCode, cloud_RoleName | extend Trend = case(SecondHalfCount > FirstHalfCount * 1.5, 'increasing', SecondHalfCount < FirstHalfCount * 0.5, 'decreasing', 'stable') | order by FailedCount desc | take 50 | project name, resultCode, cloud_RoleName, FailedCount, Trend, AvgDurationMs, P95DurationMs, LastSeen, SampleOperationId, SampleRequestId"
+$query = "let lookback = ago(${lookbackHours}h); let midpoint = ago(${halfLookbackMinutes}m); requests | where timestamp > lookback | where success == false or toint(resultCode) >= 400 | summarize FailedCount = count(), FirstHalfCount = countif(timestamp < midpoint), SecondHalfCount = countif(timestamp >= midpoint), AvgDurationMs = round(avg(duration), 1), P95DurationMs = round(percentile(duration, 95), 1), LastSeen = max(timestamp), SampleOperationId = take_any(operation_Id), SampleRequestId = take_any(id) by name, resultCode, cloud_RoleName | extend Trend = case(SecondHalfCount > FirstHalfCount * 1.5, 'increasing', SecondHalfCount < FirstHalfCount * 0.5, 'decreasing', 'stable') | order by FailedCount desc | take 50 | project name, resultCode, cloud_RoleName, FailedCount, Trend, AvgDurationMs, P95DurationMs, LastSeen, SampleOperationId, SampleRequestId"
 
 # --offset is MANDATORY: without it, the CLI applies a 1-hour server-side time
 # filter regardless of any KQL ago() in the query. Use ISO 8601 duration format.

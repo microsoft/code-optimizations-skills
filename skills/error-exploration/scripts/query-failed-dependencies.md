@@ -47,10 +47,10 @@ dependencies
 $resourceId = "<RESOURCE_ID>"
 $lookbackHours = 24  # Adjust: 1, 6, 24, 48, 168 (7 days), 720 (30 days)
 
-$halfLookback = [math]::Max(1, [math]::Floor($lookbackHours / 2))
+$halfLookbackMinutes = [math]::Max(1, [math]::Floor($lookbackHours * 60 / 2))
 
 # Build the KQL query as a single line to avoid here-string truncation issues.
-$query = "let lookback = ago(${lookbackHours}h); let midpoint = ago(${halfLookback}h); dependencies | where timestamp > lookback | where success == false | summarize FailedCount = count(), FirstHalfCount = countif(timestamp < midpoint), SecondHalfCount = countif(timestamp >= midpoint), AvgDurationMs = round(avg(duration), 1), P95DurationMs = round(percentile(duration, 95), 1), LastSeen = max(timestamp), AffectedOperations = dcount(operation_Name), SampleOperationId = take_any(operation_Id), TopOperations = make_set(operation_Name, 5) by type, target, name, resultCode, cloud_RoleName | extend Trend = case(SecondHalfCount > FirstHalfCount * 1.5, 'increasing', SecondHalfCount < FirstHalfCount * 0.5, 'decreasing', 'stable') | order by FailedCount desc | take 50 | project type, target, name, resultCode, cloud_RoleName, FailedCount, Trend, AvgDurationMs, P95DurationMs, AffectedOperations, LastSeen, SampleOperationId, TopOperations"
+$query = "let lookback = ago(${lookbackHours}h); let midpoint = ago(${halfLookbackMinutes}m); dependencies | where timestamp > lookback | where success == false | summarize FailedCount = count(), FirstHalfCount = countif(timestamp < midpoint), SecondHalfCount = countif(timestamp >= midpoint), AvgDurationMs = round(avg(duration), 1), P95DurationMs = round(percentile(duration, 95), 1), LastSeen = max(timestamp), AffectedOperations = dcount(operation_Name), SampleOperationId = take_any(operation_Id), TopOperations = make_set(operation_Name, 5) by type, target, name, resultCode, cloud_RoleName | extend Trend = case(SecondHalfCount > FirstHalfCount * 1.5, 'increasing', SecondHalfCount < FirstHalfCount * 0.5, 'decreasing', 'stable') | order by FailedCount desc | take 50 | project type, target, name, resultCode, cloud_RoleName, FailedCount, Trend, AvgDurationMs, P95DurationMs, AffectedOperations, LastSeen, SampleOperationId, TopOperations"
 
 # --offset is MANDATORY: without it, the CLI applies a 1-hour server-side time
 # filter regardless of any KQL ago() in the query. Use ISO 8601 duration format.

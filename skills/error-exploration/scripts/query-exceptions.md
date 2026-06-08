@@ -45,10 +45,10 @@ exceptions
 $resourceId = "<RESOURCE_ID>"
 $lookbackHours = 24  # Adjust: 1, 6, 24, 48, 168 (7 days), 720 (30 days)
 
-$halfLookback = [math]::Max(1, [math]::Floor($lookbackHours / 2))
+$halfLookbackMinutes = [math]::Max(1, [math]::Floor($lookbackHours * 60 / 2))
 
 # Build the KQL query as a single line to avoid here-string truncation issues.
-$query = "let lookback = ago(${lookbackHours}h); let midpoint = ago(${halfLookback}h); exceptions | where timestamp > lookback | extend ExceptionMethod = iif(isempty(outerMethod), method, outerMethod) | summarize TotalCount = count(), FirstHalfCount = countif(timestamp < midpoint), SecondHalfCount = countif(timestamp >= midpoint), LastSeen = max(timestamp), SampleMessage = take_any(outerMessage), SampleOperationId = take_any(operation_Id), TopOperations = make_set(operation_Name, 5) by type, ExceptionMethod, problemId, cloud_RoleName | extend Trend = case(SecondHalfCount > FirstHalfCount * 1.5, 'increasing', SecondHalfCount < FirstHalfCount * 0.5, 'decreasing', 'stable') | order by TotalCount desc | take 50 | project type, ExceptionMethod, problemId, cloud_RoleName, TotalCount, Trend, LastSeen, SampleMessage, SampleOperationId, TopOperations"
+$query = "let lookback = ago(${lookbackHours}h); let midpoint = ago(${halfLookbackMinutes}m); exceptions | where timestamp > lookback | extend ExceptionMethod = iif(isempty(outerMethod), method, outerMethod) | summarize TotalCount = count(), FirstHalfCount = countif(timestamp < midpoint), SecondHalfCount = countif(timestamp >= midpoint), LastSeen = max(timestamp), SampleMessage = take_any(outerMessage), SampleOperationId = take_any(operation_Id), TopOperations = make_set(operation_Name, 5) by type, ExceptionMethod, problemId, cloud_RoleName | extend Trend = case(SecondHalfCount > FirstHalfCount * 1.5, 'increasing', SecondHalfCount < FirstHalfCount * 0.5, 'decreasing', 'stable') | order by TotalCount desc | take 50 | project type, ExceptionMethod, problemId, cloud_RoleName, TotalCount, Trend, LastSeen, SampleMessage, SampleOperationId, TopOperations"
 
 # --offset is MANDATORY: without it, the CLI applies a 1-hour server-side time
 # filter regardless of any KQL ago() in the query. Use ISO 8601 duration format.
