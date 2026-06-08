@@ -162,3 +162,4 @@ If the query returns no rows:
 - **No exceptions in the time window** — This is actually good news! The application may not be throwing exceptions. Widen the time range to check historical patterns.
 - **Verify data exists** — Run a simpler query to confirm data is present: `exceptions | summarize count()`.
 - **Check telemetry configuration** — Ensure the application is configured to send exception telemetry to Application Insights.
+- **Sampling in effect** — If adaptive sampling is enabled, `count()` counts sampled rows, not original events. For high-traffic applications, actual exception volume may be higher than reported. To get sampling-aware counts, replace `count()` with `sum(itemCount)` and `countif(...)` with `sumif(itemCount, ...)` in the KQL query.

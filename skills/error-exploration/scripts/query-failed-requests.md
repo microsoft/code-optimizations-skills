@@ -145,3 +145,4 @@ If the query returns no rows:
 - **Check `--offset`** — See [az CLI query pitfalls](../../shared/az-cli-query-pitfalls.md#offset-is-mandatory).
 - **No failures in the time window** — The application may be running cleanly. Widen the time range to check historical patterns.
 - **Verify data exists** — Run a simpler query: `requests | where success == false | summarize count()`.
+- **Sampling in effect** — If adaptive sampling is enabled, `count()` counts sampled rows, not original events. For high-traffic applications, actual failure volume may be higher than reported. To get sampling-aware counts, replace `count()` with `sum(itemCount)` and `countif(...)` with `sumif(itemCount, ...)` in the KQL query.

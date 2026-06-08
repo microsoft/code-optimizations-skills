@@ -153,3 +153,4 @@ If the query returns no rows:
 - **No dependency failures in the time window** — Widen the time range.
 - **Verify data exists** — Run a simpler query: `dependencies | where success == false | summarize count()`.
 - **Check dependency tracking** — Ensure the application is configured to track dependency calls. Auto-instrumentation covers HTTP and SQL; custom dependencies may need manual tracking.
+- **Sampling in effect** — If adaptive sampling is enabled, `count()` counts sampled rows, not original events. For high-traffic applications, actual failure volume may be higher than reported. To get sampling-aware counts, replace `count()` with `sum(itemCount)` and `countif(...)` with `sumif(itemCount, ...)` in the KQL query.
