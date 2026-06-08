@@ -17,6 +17,7 @@
       "skills": [
         "./skills/perf-optimization",
         "./skills/agentic-optimization",
+        "./skills/error-exploration",
         "./skills/get-profile-hotpath",
         "./skills/get-snapshot-debug-info",
         "./skills/deep-analysis",
@@ -33,7 +34,8 @@
       "source": ".",
       "skills": [
         "./skills/perf-optimization",
-        "./skills/agentic-optimization"
+        "./skills/agentic-optimization",
+        "./skills/error-exploration"
       ]
     },
     {
