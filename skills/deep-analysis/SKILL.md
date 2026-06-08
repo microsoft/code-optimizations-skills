@@ -1,5 +1,6 @@
 ---
 name: deep-analysis
+category: investigating
 description: Cross-resource deep analysis of a specific distributed trace. Takes an operation ID and correlates telemetry across multiple Application Insights resources to build a unified picture of a distributed operation.
 ---
 

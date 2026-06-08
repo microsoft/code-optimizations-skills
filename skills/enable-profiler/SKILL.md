@@ -1,5 +1,6 @@
 ---
 name: enable-profiler
+category: setup
 description: Guide users through enabling the Application Insights Profiler for .NET on their platform. Use this when asked to enable the profiler, set up profiling, or when profiler data is missing.
 ---
 

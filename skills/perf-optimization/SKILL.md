@@ -1,5 +1,6 @@
 ---
 name: perf-optimization
+category: exploring
 description: Guide for analyzing performance issues based on profiler and code optimizations, including CPU, latency, and throughput. Use this when asked to investigate performance bottlenecks or optimize application performance.
 ---
 

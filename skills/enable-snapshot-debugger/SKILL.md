@@ -1,5 +1,6 @@
 ---
 name: enable-snapshot-debugger
+category: setup
 description: Guide users through enabling the Application Insights Snapshot Debugger for .NET on their platform. Use this when asked to enable the snapshot debugger, set up snapshot collection, or when snapshot data is missing.
 ---
 

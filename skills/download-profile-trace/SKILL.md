@@ -1,5 +1,6 @@
 ---
 name: download-profile-trace
+category: investigating
 description: Download a profiler trace file from Application Insights Profiler. Use this when asked to download, save, or export a profiler trace or .etl/.nettrace file.
 ---
 
