@@ -1,5 +1,6 @@
 ---
 name: get-snapshot-debug-info
+category: investigating
 description: Fetch exception details, call stack, and variable values from an Application Insights Snapshot Debugger snapshot. Use this when asked to inspect a snapshot, view exception info, debug an exception, or see variable values from a crash.
 ---
 

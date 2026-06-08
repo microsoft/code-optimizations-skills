@@ -1,5 +1,6 @@
 ---
 name: download-snapshot
+category: investigating
 description: Download a snapshot dump file from Application Insights Snapshot Debugger. Use this when asked to download, save, or export a snapshot or .dmp file for offline debugging.
 ---
 

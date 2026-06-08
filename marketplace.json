@@ -11,9 +11,53 @@
   "plugins": [
     {
       "name": "perf-copilot",
-      "description": "Performance optimization skills and Azure monitoring integrations (Application Insights + Azure Monitor)",
+      "description": "All performance optimization skills — exploring, investigating, and setup (Application Insights + Azure Monitor)",
       "version": "0.1.0",
-      "source": "."
+      "source": ".",
+      "skills": [
+        "./skills/perf-optimization",
+        "./skills/agentic-optimization",
+        "./skills/get-profile-hotpath",
+        "./skills/get-snapshot-debug-info",
+        "./skills/deep-analysis",
+        "./skills/download-profile-trace",
+        "./skills/download-snapshot",
+        "./skills/enable-profiler",
+        "./skills/enable-snapshot-debugger"
+      ]
+    },
+    {
+      "name": "perf-explore",
+      "description": "Explore application performance — find slow requests, anomalies, and optimization opportunities",
+      "version": "0.1.0",
+      "source": ".",
+      "skills": [
+        "./skills/perf-optimization",
+        "./skills/agentic-optimization"
+      ]
+    },
+    {
+      "name": "perf-investigate",
+      "description": "Investigate specific performance issues — drill into profiler traces, snapshots, and distributed operations",
+      "version": "0.1.0",
+      "source": ".",
+      "skills": [
+        "./skills/get-profile-hotpath",
+        "./skills/get-snapshot-debug-info",
+        "./skills/deep-analysis",
+        "./skills/download-profile-trace",
+        "./skills/download-snapshot"
+      ]
+    },
+    {
+      "name": "perf-setup",
+      "description": "Enable and configure Azure monitoring tools (Profiler, Snapshot Debugger)",
+      "version": "0.1.0",
+      "source": ".",
+      "skills": [
+        "./skills/enable-profiler",
+        "./skills/enable-snapshot-debugger"
+      ]
     }
   ]
 }

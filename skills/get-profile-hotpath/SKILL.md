@@ -1,5 +1,6 @@
 ---
 name: get-profile-hotpath
+category: investigating
 description: Fetch and display the hot path from an Application Insights Profiler trace. Use this when asked to get the profiler hot path, call tree, or trace analysis for an App Insights resource.
 ---
 

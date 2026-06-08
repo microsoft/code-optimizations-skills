@@ -1,5 +1,6 @@
 ---
 name: agentic-optimization
+category: exploring
 description: Analyze AI agent telemetry from Application Insights, including anomaly detection, trend analysis, and performance statistics. Use this when asked to analyze AI agent performance, detect anomalies in agent telemetry, or review agent trace data.
 ---
 
