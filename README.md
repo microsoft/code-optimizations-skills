@@ -29,6 +29,7 @@ Discover performance issues, anomalies, and optimization opportunities across yo
 |-------|-------------|
 | **perf-optimization** | Analyzes performance issues using Application Insights telemetry, Code Optimizations, and profiler hot paths to identify CPU, latency, and throughput bottlenecks |
 | **agentic-optimization** | Analyzes AI agent telemetry from Application Insights, including anomaly detection, trend analysis, and performance statistics |
+| **error-exploration** | Explores errors in Application Insights — exceptions, failed requests, and failed dependencies — and recommends which issues to fix based on frequency, trend, blast radius, and severity |
 
 #### 🔬 Investigating — "Why is it wrong?"
 
@@ -114,6 +115,9 @@ copilot "Help me enable the Snapshot Debugger"
 # Analyze AI agent performance
 copilot "Analyze my AI agent telemetry for anomalies"
 
+# Explore errors and failures
+copilot "What errors are happening in my application?"
+
 # Deep analysis of a distributed trace
 copilot "Do a deep analysis of operation ID abc-123"
 ```
@@ -126,6 +130,7 @@ copilot "Do a deep analysis of operation ID abc-123"
 ├── skills/
 │   ├── perf-optimization/SKILL.md               # [exploring] Performance analysis & optimization
 │   ├── agentic-optimization/SKILL.md            # [exploring] AI agent telemetry analysis
+│   ├── error-exploration/SKILL.md               # [exploring] Error analysis & prioritization
 │   ├── get-profile-hotpath/SKILL.md             # [investigating] Profiler hot path call tree
 │   ├── get-snapshot-debug-info/SKILL.md         # [investigating] Snapshot exception inspection
 │   ├── deep-analysis/SKILL.md                   # [investigating] Cross-resource distributed trace analysis
