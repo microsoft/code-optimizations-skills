@@ -1,5 +1,5 @@
 {
-  "name": "perf-copilot",
+  "name": "optix",
   "owner": {
     "name": "Saar Shen",
     "email": "noreply@github.com"
@@ -10,7 +10,7 @@
   },
   "plugins": [
     {
-      "name": "perf-copilot",
+      "name": "optix",
       "description": "All performance optimization skills — exploring, investigating, and setup (Application Insights + Azure Monitor)",
       "version": "0.1.0",
       "source": ".",
@@ -28,7 +28,7 @@
       ]
     },
     {
-      "name": "perf-explore",
+      "name": "optix-explore",
       "description": "Explore application performance — find slow requests, anomalies, and optimization opportunities",
       "version": "0.1.0",
       "source": ".",
@@ -39,7 +39,7 @@
       ]
     },
     {
-      "name": "perf-investigate",
+      "name": "optix-investigate",
       "description": "Investigate specific performance issues — drill into profiler traces, snapshots, and distributed operations",
       "version": "0.1.0",
       "source": ".",
@@ -52,7 +52,7 @@
       ]
     },
     {
-      "name": "perf-setup",
+      "name": "optix-setup",
       "description": "Enable and configure Azure monitoring tools (Profiler, Snapshot Debugger)",
       "version": "0.1.0",
       "source": ".",

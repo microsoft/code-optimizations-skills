@@ -23,7 +23,7 @@ GET https://dataplane.diagnosticservices.azure.com/api/apps/{appId}/profileTreeC
 |---|---|
 | `Authorization` | `Bearer {token}` |
 | `x-ms-client-request-id` | A new GUID for correlation |
-| `User-Agent` | `perf-copilot/{version} (commit:{hash})` — see [user-agent.md](../../shared/user-agent.md) |
+| `User-Agent` | `optix/{version} (commit:{hash})` — see [user-agent.md](../../shared/user-agent.md) |
 
 When the analysis completes, the status endpoint may return a **302 redirect** to the profile tree result. See [302-redirect-handling.md](../../shared/302-redirect-handling.md) for the full explanation and workaround pattern.
 

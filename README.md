@@ -1,6 +1,6 @@
-# Performance Optimization Copilot
+# Optix
 
-A [GitHub Copilot CLI](https://docs.github.com/en/copilot/github-copilot-in-the-cli) plugin that provides performance optimization skills and Azure monitoring integrations.
+***Opt***imize · Diagnos***t***ics · F***ix*** — a [GitHub Copilot CLI](https://docs.github.com/en/copilot/github-copilot-in-the-cli) plugin for Azure Application Insights monitoring and performance optimization.
 
 [![Watch the video](https://img.youtube.com/vi/uOdFUaCi8is/maxresdefault.jpg)](https://youtu.be/uOdFUaCi8is)
 
@@ -45,7 +45,7 @@ Drill into specific issues — profiler traces, snapshots, and distributed opera
 
 ### Agent
 
-- **perf-optimizer** — A performance optimization specialist agent that combines all skills
+- **optix-optimizer** — A performance optimization specialist agent that combines all skills
 
 ## Installation
 
@@ -54,12 +54,12 @@ Drill into specific issues — profiler traces, snapshots, and distributed opera
 copilot plugin marketplace add xiaomi7732/performance-optimization-copilot
 
 # Install all skills + agent (recommended)
-copilot plugin install perf-copilot@xiaomi7732/performance-optimization-copilot
+copilot plugin install optix@xiaomi7732/performance-optimization-copilot
 
-# Or install by category (each includes the perf-optimizer agent)
-copilot plugin install perf-explore@xiaomi7732/performance-optimization-copilot       # Exploring skills + agent
-copilot plugin install perf-investigate@xiaomi7732/performance-optimization-copilot    # Investigating skills + agent
-copilot plugin install perf-setup@xiaomi7732/performance-optimization-copilot          # Setup skills + agent
+# Or install by category (each includes the optix-optimizer agent)
+copilot plugin install optix-explore@xiaomi7732/performance-optimization-copilot       # Exploring skills + agent
+copilot plugin install optix-investigate@xiaomi7732/performance-optimization-copilot    # Investigating skills + agent
+copilot plugin install optix-setup@xiaomi7732/performance-optimization-copilot          # Setup skills + agent
 ```
 
 ## Prerequisites
@@ -83,7 +83,7 @@ az login
 
 # Add marketplace and install all skills + agent
 copilot plugin marketplace add xiaomi7732/performance-optimization-copilot
-copilot plugin install perf-copilot@xiaomi7732/performance-optimization-copilot
+copilot plugin install optix@xiaomi7732/performance-optimization-copilot
 ```
 
 ## Usage
@@ -126,7 +126,7 @@ copilot "Do a deep analysis of operation ID abc-123"
 
 ```
 ├── plugin.json                                  # Plugin manifest
-├── marketplace.json                             # Marketplace manifest (perf-copilot, perf-explore, perf-investigate, perf-setup)
+├── marketplace.json                             # Marketplace manifest (optix, optix-explore, optix-investigate, optix-setup)
 ├── skills/
 │   ├── perf-optimization/SKILL.md               # [exploring] Performance analysis & optimization
 │   ├── agentic-optimization/SKILL.md            # [exploring] AI agent telemetry analysis
@@ -140,7 +140,7 @@ copilot "Do a deep analysis of operation ID abc-123"
 │   ├── enable-snapshot-debugger/SKILL.md        # [setup] Snapshot Debugger enablement guide
 │   └── shared/investigation-notes.md            # Shared investigation context template
 ├── agents/
-│   └── perf-optimizer.agent.md                  # Performance optimizer agent
+│   └── optix-optimizer.agent.md                  # Performance optimizer agent
 ├── README.md
 └── LICENSE
 ```

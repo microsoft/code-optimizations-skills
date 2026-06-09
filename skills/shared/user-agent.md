@@ -5,7 +5,7 @@ All HTTP requests made by this plugin must include a `User-Agent` header to iden
 ## Format
 
 ```
-perf-copilot/{version} (commit:{commitHash})
+optix/{version} (commit:{commitHash})
 ```
 
 Both values come from `plugin.json` at the repository root:
@@ -17,7 +17,7 @@ Both values come from `plugin.json` at the repository root:
 Read `version` and `commit` from `plugin.json` to construct the agent string. Include it in every header dictionary:
 
 ```powershell
-$userAgent = "perf-copilot/$version (commit:$commit)"
+$userAgent = "optix/$version (commit:$commit)"
 
 $headers = @{
     "Authorization" = "Bearer $token"

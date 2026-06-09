@@ -25,7 +25,7 @@ All HTTP requests must include a `User-Agent` header to identify this plugin. Se
 Read `version` and `commit` from `plugin.json` (at the repository root) and construct the agent string:
 
 ```powershell
-$userAgent = "perf-copilot/$version (commit:$commit)"
+$userAgent = "optix/$version (commit:$commit)"
 ```
 
 ## Standard headers

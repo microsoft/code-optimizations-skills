@@ -14,7 +14,7 @@ GET https://dataplane.diagnosticservices.azure.com/api/apps/{appId}/profileTreeM
 |---|---|
 | `Authorization` | `Bearer {token}` |
 | `x-ms-client-request-id` | A new GUID for correlation |
-| `User-Agent` | `perf-copilot/{version} (commit:{hash})` — see [user-agent.md](../../shared/user-agent.md) |
+| `User-Agent` | `optix/{version} (commit:{hash})` — see [user-agent.md](../../shared/user-agent.md) |
 
 ## PowerShell script
 
