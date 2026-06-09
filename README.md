@@ -1,6 +1,6 @@
 # Optix
 
-***Opti***mization + Diagnosti***x*** — a [GitHub Copilot CLI](https://docs.github.com/en/copilot/github-copilot-in-the-cli) plugin for Azure Application Insights monitoring and performance optimization.
+***Opt***imize · Diagnos***t***ics · F***ix*** — a [GitHub Copilot CLI](https://docs.github.com/en/copilot/github-copilot-in-the-cli) plugin for Azure Application Insights monitoring and performance optimization.
 
 [![Watch the video](https://img.youtube.com/vi/uOdFUaCi8is/maxresdefault.jpg)](https://youtu.be/uOdFUaCi8is)
 
