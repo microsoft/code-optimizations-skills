@@ -1,5 +1,5 @@
 {
-  "name": "perf-copilot",
+  "name": "optix",
   "description": "Performance optimization skills and Azure monitoring integrations for GitHub Copilot CLI",
   "version": "0.1.0",
   "commit": "85d1ba0",

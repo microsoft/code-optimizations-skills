@@ -46,7 +46,7 @@ try {
     Set-Content $pluginJsonPath -Value $pluginContent -NoNewline
 
     Write-Host "Updated plugin.json: commit $oldCommit -> $commitHash"
-    Write-Host "Agent string:        perf-copilot/$version (commit:$commitHash)"
+    Write-Host "Agent string:        optix/$version (commit:$commitHash)"
     Write-Host ""
     Write-Host "Review with 'git diff plugin.json', then commit."
 } finally {

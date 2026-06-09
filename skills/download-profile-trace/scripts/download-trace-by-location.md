@@ -35,7 +35,7 @@ POST https://dataplane.diagnosticservices.azure.com/api/apps/{appId}/artifacts/b
 | `Authorization` | `Bearer {token}` |
 | `Content-Type` | `application/json` |
 | `x-ms-client-request-id` | A new GUID for correlation |
-| `User-Agent` | `perf-copilot/{version} (commit:{hash})` — see [user-agent.md](../../shared/user-agent.md) |
+| `User-Agent` | `optix/{version} (commit:{hash})` — see [user-agent.md](../../shared/user-agent.md) |
 
 ### Query Parameters
 

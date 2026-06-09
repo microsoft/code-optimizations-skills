@@ -1,5 +1,5 @@
 ---
-name: perf-optimizer
+name: optix-optimizer
 description: A performance optimization specialist that helps profile, analyze, and optimize application performance using best practices and Azure monitoring tools.
 tools: ["bash", "powershell", "edit", "view", "grep", "glob"]
 ---
