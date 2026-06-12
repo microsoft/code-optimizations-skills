@@ -51,15 +51,15 @@ Drill into specific issues — profiler traces, snapshots, and distributed opera
 
 ```bash
 # Add the marketplace
-copilot plugin marketplace add xiaomi7732/performance-optimization-copilot
+copilot plugin marketplace add microsoft/code-optimizations-skills
 
 # Install all skills + agent (recommended)
-copilot plugin install optix@xiaomi7732/performance-optimization-copilot
+copilot plugin install optix@microsoft/code-optimizations-skills
 
 # Or install by category (each includes the optix-optimizer agent)
-copilot plugin install optix-explore@xiaomi7732/performance-optimization-copilot       # Exploring skills + agent
-copilot plugin install optix-investigate@xiaomi7732/performance-optimization-copilot    # Investigating skills + agent
-copilot plugin install optix-setup@xiaomi7732/performance-optimization-copilot          # Setup skills + agent
+copilot plugin install optix-explore@microsoft/code-optimizations-skills       # Exploring skills + agent
+copilot plugin install optix-investigate@microsoft/code-optimizations-skills    # Investigating skills + agent
+copilot plugin install optix-setup@microsoft/code-optimizations-skills          # Setup skills + agent
 ```
 
 ## Prerequisites
