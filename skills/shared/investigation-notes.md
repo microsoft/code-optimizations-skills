@@ -1,0 +1,104 @@
+# Investigation Notes
+
+Investigation notes capture key context gathered during a performance investigation — especially the Application Insights resource identity — so that subsequent skill invocations can reuse it without re-asking the user.
+
+## File location
+
+The investigation notes file is named **`investigation-notes.md`** and lives in the **current working directory**.
+
+## When to read
+
+At the **beginning** of every skill invocation, before asking the user for any inputs:
+
+1. Check whether `investigation-notes.md` exists in the working directory.
+2. If it exists, read it and extract any values relevant to the current skill (e.g., resource ID, app ID, subscription).
+3. Present the found values to the user and ask whether they want to **reuse** them or **provide new ones**.
+4. If the user confirms, skip the corresponding input-gathering steps.
+
+## When to write
+
+After successfully identifying or resolving the Application Insights resource (or any other key investigation context):
+
+1. If `investigation-notes.md` does not exist, create it with the template below.
+2. If it already exists, update only the fields that have new or changed values — preserve everything else.
+
+## File format
+
+```markdown
+# Investigation Notes
+
+## Application Insights Resource
+
+| Field             | Value |
+|-------------------|-------|
+| Resource Name     | `<name>` |
+| Resource ID       | `<full ARM resource ID>` |
+| App ID            | `<GUID>` |
+| Subscription ID   | `<GUID>` |
+| Resource Group    | `<name>` |
+
+## Additional Context
+
+<!-- Optional: free-form notes about the investigation, e.g., target endpoints, time ranges, observations -->
+
+## Related Resources
+
+<!-- Optional: populated by discover-related-resources.md when investigating distributed traces across multiple App Insights resources -->
+
+| Role | Resource Name | Resource ID | App ID | Subscription ID | Resource Group |
+|------|---------------|-------------|--------|-----------------|----------------|
+| Agent host | `<name>` | `<full ARM resource ID>` | `<GUID>` | `<GUID>` | `<name>` |
+| Tool: SearchAPI | `<name>` | `<full ARM resource ID>` | `<GUID>` | `<GUID>` | `<name>` |
+```
+
+## Key fields
+
+| Field | Description | Used by |
+|---|---|---|
+| **Resource ID** | Full ARM resource ID (`/subscriptions/.../providers/microsoft.insights/components/...`). Primary identifier for Azure Monitor queries. | `perf-optimization`, `download-profile-trace`, `get-profile-hotpath` |
+| **App ID** | Application Insights app ID (GUID). Required for profiler dataplane API calls. | `download-profile-trace`, `get-profile-hotpath` |
+| **Subscription ID** | Azure subscription GUID. Useful for Azure CLI commands. | All skills |
+| **Resource Group** | Azure resource group name. Useful for scoped lookups. | All skills |
+| **Resource Name** | Display name of the Application Insights resource. Helps the user confirm identity. | All skills |
+
+### Related Resources fields
+
+The "Related Resources" section is optional — it is populated by [discover-related-resources.md](discover-related-resources.md) when investigating distributed traces that span multiple App Insights resources.
+
+| Field | Description | Used by |
+|---|---|---|
+| **Role** | Freeform label describing the resource's role in the architecture (e.g., "Agent host", "Tool: SearchAPI", "Backend: SQL"). Helps the user understand why this resource is relevant. | `deep-analysis` |
+| **Resource Name** | Display name of the App Insights component. | `deep-analysis`, any skill |
+| **Resource ID** | Full ARM resource ID. | `deep-analysis`, `perf-optimization` |
+| **App ID** | Application Insights app ID (GUID). | `deep-analysis`, `get-profile-hotpath` |
+| **Subscription ID** | Azure subscription GUID. | All skills |
+| **Resource Group** | Azure resource group name. | All skills |
+
+## Parsing flexibility
+
+The investigation notes file may be written in different formats depending on who or what created it. When **reading** the file, accept both common formats:
+
+### Table format (recommended for writing)
+
+```markdown
+| Field             | Value |
+|-------------------|-------|
+| Resource ID       | `/subscriptions/.../components/my-app` |
+| App ID            | `a1b2c3d4-...` |
+```
+
+### Bullet-point format
+
+```markdown
+- **Resource ID**: /subscriptions/.../components/my-app
+- **App ID**: a1b2c3d4-...
+```
+
+When **writing** the file, use the table format from the template above. When **reading**, look for field names (Resource ID, App ID, Subscription ID, Resource Group) regardless of the surrounding markdown structure.
+
+## Rules
+
+- **Always confirm with the user** before reusing values from the notes. The user may want to switch to a different resource.
+- **Never silently skip** gathering a required value — if it's missing from the notes, ask the user.
+- **Update incrementally** — when a skill resolves a new value (e.g., app ID from resource ID), add it to the notes without overwriting unrelated fields.
+- **Respect user overrides** — if the user provides a value that differs from the notes, update the notes with the new value.
