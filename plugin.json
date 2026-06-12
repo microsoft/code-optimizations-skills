@@ -5,10 +5,10 @@
   "commit": "85d1ba0",
   "author": {
     "name": "Saar Shen",
-    "url": "https://github.com/xiaomi7732"
+    "url": "https://github.com/microsoft"
   },
   "license": "MIT",
-  "repository": "https://github.com/xiaomi7732/performance-optimization-copilot",
+  "repository": "https://github.com/microsoft/code-optimizations-skills",
   "keywords": [
     "performance",
     "optimization",
