@@ -12,9 +12,9 @@
 
 Skills are organized into three categories that form a natural workflow: **Setup** → **Explore** → **Investigate**.
 
-#### 🔧 Setup — "Am I ready?"
+#### 🔧 Setup — "Am I ready?" *(recommended)*
 
-Ensure Azure monitoring tools are enabled and configured before you start.
+These skills help ensure Azure monitoring tools are enabled and configured. They are recommended but not strictly required — other skills will guide you to enable them when needed.
 
 | Skill | Description |
 |-------|-------------|
@@ -47,28 +47,19 @@ Drill into specific issues — profiler traces, snapshots, and distributed opera
 
 - **optix-optimizer** — A performance optimization specialist agent that combines all skills
 
-## Installation
-
-```bash
-# Add the marketplace
-copilot plugin marketplace add microsoft/code-optimizations-skills
-
-# Install all skills + agent (recommended)
-copilot plugin install optix@microsoft/code-optimizations-skills
-
-# Or install by category (each includes the optix-optimizer agent)
-copilot plugin install optix-explore@microsoft/code-optimizations-skills       # Exploring skills + agent
-copilot plugin install optix-investigate@microsoft/code-optimizations-skills    # Investigating skills + agent
-copilot plugin install optix-setup@microsoft/code-optimizations-skills          # Setup skills + agent
-```
-
 ## Prerequisites
 
 - [GitHub Copilot CLI](https://docs.github.com/en/copilot/github-copilot-in-the-cli) installed and authenticated
 - [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) installed and logged in (`az login`)
-- An Azure subscription with Application Insights configured (Profiler for performance analysis, Snapshot Debugger for exception debugging)
+- An Azure subscription with Application Insights configured
 
-### Quick Install (Windows)
+The following are recommended but not required — skills will prompt you to enable them when needed:
+
+- [Application Insights Profiler](https://learn.microsoft.com/azure/azure-monitor/profiler/profiler-overview) for performance analysis
+- [Snapshot Debugger](https://learn.microsoft.com/azure/azure-monitor/snapshot-debugger/snapshot-debugger) for exception debugging
+
+<details>
+<summary>Quick setup on Windows</summary>
 
 ```powershell
 # Install GitHub Copilot CLI
@@ -80,11 +71,30 @@ winget install Microsoft.AzureCLI
 # Authenticate
 copilot auth login
 az login
-
-# Add marketplace and install all skills + agent
-copilot plugin marketplace add microsoft/code-optimizations-skills
-copilot plugin install optix@microsoft/code-optimizations-skills
 ```
+
+</details>
+
+## Installation
+
+```bash
+# Add the marketplace
+copilot plugin marketplace add microsoft/code-optimizations-skills
+
+# Install all skills + agent
+copilot plugin install optix@microsoft-optix
+```
+
+<details>
+<summary>Optional: Install by category instead</summary>
+
+```bash
+copilot plugin install optix-explore@microsoft-optix       # Exploring skills + agent
+copilot plugin install optix-investigate@microsoft-optix    # Investigating skills + agent
+copilot plugin install optix-setup@microsoft-optix          # Setup skills + agent
+```
+
+</details>
 
 ## Usage
 
