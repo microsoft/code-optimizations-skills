@@ -6,6 +6,25 @@
 
 ▶ [Watch the demo video](https://youtu.be/uOdFUaCi8is)
 
+## Why Optix?
+
+Production issues are hard to debug — scattered telemetry, unfamiliar tools, and context switching between portals. Optix brings Azure Application Insights directly into your terminal, so you can go from symptom to root cause to fix without leaving your workflow.
+
+- **Find what's broken** — surface slow requests, errors, and anomalies from Application Insights telemetry
+- **Understand why** — drill into profiler hot paths, snapshot call stacks, and distributed traces at the method level
+- **Fix it faster** — get actionable code-level recommendations, not just dashboards
+
+### Case Studies
+
+Real bugs found and fixed using Optix:
+
+| Case Study | What happened | Impact |
+|------------|---------------|--------|
+| [Redis Instrumentation Blind Spot](docs/case-studies/redis-instrumentation-blind-spot.md) | Redis operations were completely invisible — no dependency telemetry, no profiler frames. A connection pool exhaustion event caused 500 errors with 60s+ request durations. | Added Redis dependency tracking; enabled data-driven timeout tuning |
+| [Kusto Cancellation Exception](docs/case-studies/bugfix-kusto-cancellation-exception.md) | 36+ Error-level exceptions per day from benign client disconnects, triggering unnecessary Snapshot Debugger captures. | Downgraded to Warning; eliminated telemetry noise |
+| [Geneva Audit Missing Description](docs/case-studies/bugfix-geneva-audit-missing-description.md) | Audit records silently dropped 176 times/day across 13 production regions due to a missing parameter. | One-line fix restored audit compliance |
+| [CDS Request Failed Exception](docs/case-studies/bugfix-cds-request-failed-exception.md) | Transient CDS failures cached for 15 minutes, amplifying brief outages into prolonged service degradation. | Added cache eviction for transient errors; differentiated 5xx from permanent failures |
+
 ## What's Included
 
 ### Skills
